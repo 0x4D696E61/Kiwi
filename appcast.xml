@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+  <channel>
+    <title>Kiwi Updates</title>
+    <description>Kiwi automatic updates</description>
+    <item>
+      <title>Kiwi 0.1.02</title>
+      <description>Kiwi 0.1.02 update.</description>
+      <enclosure
+        url="https://github.com/0x4D696E61/Kiwi/releases/download/v0.1.02/Kiwi-Setup-0.1.02.exe"
+        sparkle:version="0.1.02"
+        sparkle:shortVersionString="0.1.02"
+        sparkle:edSignature="I0YSsMnqZvkcSkxteozFXnYvVIdFPDsCPX8LVlDVmxWJ0jAHcYLBopw3F2I0r0KvewEzRu6IsDPPu6NcIzjtAg=="
+        length="4455272"
+        type="application/octet-stream"
+      />
+    </item>
+  </channel>
+</rss>
