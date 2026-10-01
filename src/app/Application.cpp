@@ -18,6 +18,7 @@
 #include "../renderer/EditorRenderer.hpp"
 #include "../renderer/ExplorerRenderer.hpp"
 #include "../renderer/HomeRenderer.hpp"
+#include "../renderer/TutorialRenderer.hpp"
 
 #include "../explorer/Explorer.hpp"
 
@@ -29,6 +30,8 @@
 #include "../tui/Theme.hpp"
 
 #include "../updater/Updater.hpp"
+
+#include "../tutorial/Tutorial.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -183,6 +186,7 @@ int Application::run() {
     Editor editor;
     Explorer explorer;
     Settings settings;
+    Tutorial tutorial;
     settings.load();
     explorer.setTree(settings.tree);
 
@@ -253,6 +257,7 @@ int Application::run() {
     HomeRenderer home(terminal);
     EditorRenderer editorView(terminal);
     ExplorerRenderer explorerView;
+    TutorialRenderer tutorialView;
 
     Screen screen(terminal.w(), terminal.h());
     TuiRenderer tui(terminal);
@@ -342,6 +347,12 @@ int Application::run() {
         screen.clear();
         screen.clearGlyphs();
 
+        if (tutorial.active()) {
+            tutorialView.render(screen, tutorial);
+            tui.render(screen, 0, 0, false);
+            return;
+        }
+
         if (state == AppState::Home && settingsOpen) {
             drawSettings(screen, settings, settingIndex, uTab);
             tui.render(screen, 0, 0, false);
@@ -360,7 +371,7 @@ int Application::run() {
 
             if (panelWidth > 0) explorerView.render(explorer, explorerPainter, explorerScroll, focus == Focus::Explorer);
 
-            if (panelWidth > 0) {
+            if (panelWidth > 0 && settings.separator) {
                 Style separator;
                 separator.fgRgb = kiwiTheme.separator;
                 for (int y = 0; y < panel.h; y++) screen.set(panelWidth - 1, y, '|', separator);
@@ -571,6 +582,28 @@ int Application::run() {
         const KeyEvent event = console.readKey();
         const char key = event.character;
 
+        if (tutorial.active()) {
+            if (!event.keyDown) continue;
+
+            if (key == 27) {
+                tutorial.close();
+
+                terminal.clear();
+                tui.invalidate();
+
+                if (state == AppState::Home && !hTreeOpen) home.render();
+                else drawFrame();
+
+                continue;
+            }
+
+            if (key == 'a') tutorial.prev();
+            if (key == 'd') tutorial.next();
+
+            drawFrame();
+            continue;
+        }
+
         if (state == AppState::Home && !settingsOpen && !cmdBar.active() && updater_.available() && !updateLatuh && message.empty()) {
             if (!updateShown) {
                 if (hTreeOpen) drawFrame();
@@ -684,6 +717,16 @@ int Application::run() {
 
         if (event.leftCtrl && event.keyDown) continue;
         if (!event.keyDown) continue;
+
+        if (state == AppState::Home && !cmdBar.active() && key == 'h') {
+            tutorial.open();
+
+            terminal.clear();
+            tui.invalidate();
+            drawFrame();
+
+            continue;
+        }
 
         if (((state == AppState::Editor && explVis) || (state == AppState::Home && hTreeOpen)) && focus == Focus::Explorer && !cmdBar.active()) {
             if (key == '.') {
@@ -813,11 +856,6 @@ int Application::run() {
                         continue;
                     }
 
-                    if (key == 'h') {
-                        home.renderMsg("The .help tutorial is coming later.");
-                        continue;
-                    }
-
                     if (key >= '1' && key <= '9') {
                         const auto path = home.recent(key - '1');
                         if (path.empty()) continue;
@@ -912,6 +950,19 @@ int Application::run() {
 
                 std::string typed = cmdBar.text();
                 std::transform(typed.begin(), typed.end(), typed.begin(), [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+
+                if (typed == "help" || typed == ".help") {
+                    cmdBar.cancel();
+                    message.clear();
+
+                    tutorial.open();
+
+                    terminal.clear();
+                    tui.invalidate();
+                    drawFrame();
+                    
+                    continue;
+                }
 
                 if (typed == "tree" || typed == ".tree") {
                     cmdBar.cancel();
@@ -1153,7 +1204,20 @@ int Application::run() {
                 lcf = Focus::Editor;
 
                 message.clear();
-                currDir = buffer.path().parent_path();
+
+                const auto parent = buffer.path().parent_path();
+                const auto rel = buffer.path().lexically_relative(wksroot);
+
+                if (rel.empty() || rel.is_absolute() || *rel.begin() == "..") {
+                    wksroot = parent;
+                    currDir = parent;
+                
+                    explorer.open(wksroot);
+                    wksr = true;
+                } else {
+                    currDir = parent;
+                }
+
                 revealFile(buffer.path());
                 explorerScroll = 0;
 

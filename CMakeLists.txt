@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
 
-project(Kiwi VERSION 0.1.02 LANGUAGES CXX RC)
+project(Kiwi VERSION 0.2.00 LANGUAGES CXX RC)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -32,6 +32,8 @@ add_executable(kiwi
     src/tui/Layout.cpp
     src/tui/Painter.cpp
     src/updater/Updater.cpp
+    src/tutorial/Tutorial.cpp
+    src/renderer/TutorialRenderer.cpp
 )
 
 target_sources(kiwi PRIVATE assets/kiwi.rc)
