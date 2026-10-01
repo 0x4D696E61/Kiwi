@@ -40,6 +40,11 @@ KeyEvent Console::readKey() {
     DWORD eventsRead = 0;
 
     while (true) {
+        const DWORD result = WaitForSingleObject(input, 50);
+        
+        if (result == WAIT_TIMEOUT) return {};
+        if (result != WAIT_OBJECT_0) return {};
+        
         if (!ReadConsoleInputW(input, &record, 1, &eventsRead)) return {};
         if (record.EventType != KEY_EVENT) continue;
 

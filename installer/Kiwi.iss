@@ -1,4 +1,4 @@
-#define AppVersion "0.1.0"
+#define AppVersion "0.1.02"
 
 [Setup]
 AppId=0x4D696E61.Kiwi
@@ -26,6 +26,7 @@ Name: "desktopicon"; Description: "Create a desktop shortcut"; Flags: unchecked
 [Files]
 Source: "..\build\debug\kiwi.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\build\debug\WinSparkle.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\build\debug\winsparkle-tool.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\msys64\clang64\bin\libc++.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\assets\kiwi.ico"; DestDir: "{app}"; Flags: ignoreversion
 

@@ -102,7 +102,7 @@ void HomeRenderer::render(int offset) {
     if (offset == 0) terminal_.clear();
 
     center(top, "KIWI", blue);
-    center(top + 3, "v" + std::string(version) + " by 0x4D696E61 (Github)", muted);
+    center(top + 3, "v" + std::string(kiwiversion) + " by 0x4D696E61 (Github)", muted);
 
     const std::string actions[] = {"[N] New", "[O] Open", "[S] Settings", "[H] Help"};
     const std::string colors[] = {green, blue, orange, purple};

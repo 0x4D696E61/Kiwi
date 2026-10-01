@@ -1,3 +1,5 @@
 build/
 external/WinSparkle.zip
 external/winsparkle/__MACOSX/
+secrets/
+dist/

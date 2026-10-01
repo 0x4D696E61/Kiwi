@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
 
-project(Kiwi VERSION 0.1.0 LANGUAGES CXX RC)
+project(Kiwi VERSION 0.1.02 LANGUAGES CXX RC)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -35,6 +35,7 @@ add_executable(kiwi
 )
 
 target_sources(kiwi PRIVATE assets/kiwi.rc)
+target_link_libraries(kiwi PRIVATE wininet)
 
 target_include_directories(kiwi PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}/generated
@@ -44,4 +45,7 @@ add_custom_command(TARGET kiwi POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${CMAKE_CURRENT_SOURCE_DIR}/external/winsparkle/WinSparkle-0.9.4/x64/Release/WinSparkle.dll"
         "$<TARGET_FILE_DIR:kiwi>/WinSparkle.dll"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_CURRENT_SOURCE_DIR}/external/winsparkle/WinSparkle-0.9.4/bin/winsparkle-tool.exe"
+        "$<TARGET_FILE_DIR:kiwi>/winsparkle-tool.exe"
 )

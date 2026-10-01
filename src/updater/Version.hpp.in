@@ -1,3 +1,3 @@
 #pragma once
 
-#define version "@PROJECT_VERSION@"
+#define kiwiversion "@PROJECT_VERSION@"
