@@ -2,142 +2,143 @@
   <img src="assets/kiwi.png" alt="Kiwi Logo" width="160">
 </p>
 
-# Kiwi 🥝
+<h1 align="center">Kiwi 🥝</h1>
 
-A lightweight, keyboard-driven terminal code editor written in C++23 for Windows.
+<p align="center">
+  A lightweight, keyboard-driven terminal code editor written in C++23 for Windows.
+</p>
 
-Kiwi is built around modal editing, fast keyboard navigation, simple commands, and a terminal-based workspace.
+<p align="center">
+  <a href="https://github.com/0x4D696E61/Kiwi/releases/latest">
+    <img src="https://img.shields.io/github/v/release/0x4D696E61/Kiwi?label=release">
+  </a>
+  <img src="https://img.shields.io/badge/C%2B%2B-23-blue">
+  <img src="https://img.shields.io/badge/platform-Windows-blue">
+  <a href="LICENSE">
+    <img src="https://img.shields.io/github/license/0x4D696E61/Kiwi">
+  </a>
+</p>
 
-> Current version: **v0.1.02**
+<p align="center">
+  <a href="https://github.com/0x4D696E61/Kiwi/releases/latest"><b>Download</b></a>
+  ·
+  <a href="#controls"><b>Controls</b></a>
+  ·
+  <a href="#commands"><b>Commands</b></a>
+  ·
+  <a href="#building-from-source"><b>Build</b></a>
+</p>
+
+## About
+
+Kiwi is a terminal code editor built around keyboard navigation, modal editing, and a simple workspace.
+
+It has its own terminal UI, file explorer, command system, recent files, configurable settings, and automatic updates.
+
+Kiwi is currently in early development.
 
 ## Features
 
-- Keyboard-driven modal editing with **NAV** and **EDIT** modes
-- Built-in file explorer with Simple and Tree modes
-- Editor and explorer focus switching
-- File and directory workspace support
-- Home screen with recent files
-- Selection, line selection, copy, and paste
-- Word-based navigation and editing
+- NAV and EDIT editing modes
+- Built-in file explorer
+- Simple and Tree explorer modes
+- File and directory workspaces
+- Recent files
+- Text and line selection
+- Clipboard support
+- Word navigation
 - Undo and redo
-- Command bar for file operations and navigation
-- Save As and file deletion
-- Configurable explorer, separator, and NAV cursor
-- Automatic update checking and installation
-- Custom terminal UI and status bar
-- Direct file or directory opening from the command line
+- Command bar
+- Configurable UI settings
+- Automatic updates
+- Direct file and workspace opening from the command line
 
 ## Installation
 
-Download the latest Windows installer from the **Releases** section of this repository.
+Download the Windows installer from the [**latest release**](https://github.com/0x4D696E61/Kiwi/releases/latest).
 
-Run:
+After installation, Kiwi can check for new versions automatically. Available updates can be installed directly from the Home screen.
 
-```text
-Kiwi-Setup-0.1.02.exe
-```
+## Controls
 
-Kiwi includes an automatic updater. When a newer version is available, the Home screen will display:
+Kiwi uses two editor modes:
 
-```text
-Kiwi update available!  [I] Install  [L] Later
-```
+- **NAV** for navigation and commands
+- **EDIT** for writing text
 
-`I` installs the update and `L` dismisses it for the current session.
+Press `Space` in NAV to enter EDIT.
 
-## Modes
-
-Kiwi uses two main editor modes.
+Press and release `Left Ctrl` to return to NAV.
 
 ### NAV
 
-NAV is the default navigation mode.
-
-Use it to move around the file, select text, copy and paste, navigate by words, undo or redo, and open the command bar.
-
-### EDIT
-
-EDIT mode is used for writing and modifying text.
-
-Press `Space` while in NAV to enter EDIT mode.
-
-Press and release `Left Ctrl` to return to NAV mode.
-
-## Editor controls
-
-### NAV mode
-
 | Key | Action |
 | --- | --- |
-| `W` | Move cursor up |
-| `A` | Move cursor left |
-| `S` | Move cursor down |
-| `D` | Move cursor right |
+| `W` | Move up |
+| `A` | Move left |
+| `S` | Move down |
+| `D` | Move right |
 | `Space` | Enter EDIT mode |
-| `Left Ctrl` | Return to NAV mode when released |
 | `.` | Open command bar |
 | `1` | Undo |
 | `2` | Redo |
-| `qq` | Move to previous word |
-| `rr` | Move to next word |
-| `xx` | Change current word and enter EDIT mode |
-| `v` | Toggle text selection |
+| `qq` | Previous word |
+| `rr` | Next word |
+| `xx` | Change word and enter EDIT |
+| `v` | Toggle selection |
 | `Shift + V` | Select current line |
 | `cc` | Copy current line |
-| `cv` | Copy selected text |
-| `ca` | Paste clipboard contents |
+| `cv` | Copy selection |
+| `ca` | Paste |
 
-Movement while selection is active expands or shrinks the selection.
+Moving while a selection is active extends the selection.
 
-### EDIT mode
+### EDIT
 
 | Key | Action |
 | --- | --- |
 | Normal keys | Insert text |
-| `Enter` | Insert a new line |
-| `Backspace` | Delete the previous character or merge lines |
+| `Enter` | New line |
+| `Backspace` | Delete character or merge lines |
 | `Tab` | Insert 4 spaces |
-| `Left Ctrl` | Return to NAV mode when released |
+| `Left Ctrl` | Return to NAV when released |
 
-## Explorer controls
+### Explorer
 
 | Key | Action |
 | --- | --- |
-| `W` | Move selection up |
-| `S` | Move selection down |
-| `Enter` | Open a file or directory / toggle a folder in Tree mode |
-| `Backspace` | Move to the parent directory |
+| `W` | Move up |
+| `S` | Move down |
+| `Enter` | Open file or directory |
+| `Backspace` | Go to parent directory |
 | `.` | Open command bar |
-| `Left Ctrl + Space` | Switch focus between Explorer and Editor |
+| `Left Ctrl + Space` | Switch between Explorer and Editor |
 
-The explorer can operate in either **Simple** or **Tree** mode.
+In Tree mode, `Enter` expands or collapses directories.
 
-Tree mode allows directories to be expanded directly inside the explorer.
-
-## Home controls
+### Home
 
 | Key | Action |
 | --- | --- |
-| `N` | Start creating a new file |
-| `O` | Start opening a file |
+| `N` | Create a new file |
+| `O` | Open a file |
 | `S` | Open Settings |
-| `H` | Open Help |
 | `1` - `9` | Open a recent file |
 | `.` | Open command bar |
 
-## Settings controls
+### Settings
 
 | Key | Action |
 | --- | --- |
 | `A` / `W` | Previous setting |
 | `D` / `S` | Next setting |
-| `Enter` | Toggle selected setting |
+| `Enter` | Toggle setting |
 | `Esc` | Close Settings |
 
 Current settings include:
 
-- Explorer mode: `TREE` / `SIMPLE`
-- Vertical Explorer/Editor separator
+- Simple or Tree explorer
+- Explorer/Editor separator
 - NAV block cursor
 
 ## Commands
@@ -150,94 +151,87 @@ Press `.` to open the command bar.
 | --- | --- |
 | `.new <path>` | Create a new file |
 | `.open <path>` | Open a file |
-| `.save` / `.s` | Save the current file |
-| `.saveas <path>` | Save the current file to another path |
-| `.del <path>` | Delete a file |
-| `.delete <path>` | Delete a file |
+| `.save` / `.s` | Save |
+| `.saveas <path>` | Save to another path |
+| `.del <path>` / `.delete <path>` | Delete a file |
 
-### Navigation and interface
+### Workspace
 
 | Command | Action |
 | --- | --- |
-| `.home` | Return to the Home screen |
+| `.home` | Return to Home |
 | `.tree` | Toggle the file explorer |
 | `.settings` | Open Settings |
 
-### Quitting
+### Exit
 
 | Command | Action |
 | --- | --- |
-| `.q` / `.quit` | Quit Kiwi |
+| `.q` / `.quit` | Quit |
 | `.sq` / `.squit` / `.savequit` | Save and quit |
-| `.fq` / `.fquit` / `.forcequit` | Force quit without the normal unsaved-change protection |
+| `.fq` / `.fquit` / `.forcequit` | Force quit |
 
-Kiwi prevents normal quitting or switching files when unsaved changes would be lost.
+Normal quitting is blocked when the current file has unsaved changes.
 
-## Opening files and workspaces
+## Opening files
 
-Kiwi can be launched normally:
-
-```powershell
-.\kiwi.exe
-```
-
-A file can be opened directly:
+Launch Kiwi normally:
 
 ```powershell
-.\kiwi.exe .\main.cpp
+kiwi.exe
 ```
 
-A directory can also be opened as a workspace:
+Open a file directly:
 
 ```powershell
-.\kiwi.exe .\MyProject
+kiwi.exe .\main.cpp
 ```
 
-When a directory is supplied, Kiwi opens the workspace with focus on the file explorer.
+Or open a directory as a workspace:
+
+```powershell
+kiwi.exe .\MyProject
+```
 
 ## Building from source
 
 ### Requirements
 
 - Windows 11
-- CMake 3.25 or newer
+- CMake 3.25+
 - Ninja
 - C++23-compatible compiler
 - MSYS2 Clang64 recommended
 
 ### Build
 
-Clone the Kiwi repository, enter its directory, then run:
-
 ```powershell
+git clone https://github.com/0x4D696E61/Kiwi.git
+cd Kiwi
+
 cmake --preset debug
 cmake --build --preset debug
+
 .\build\debug\kiwi.exe
 ```
 
 ## Updates
 
-Kiwi checks for updates automatically when it starts.
+Kiwi checks for updates when it starts.
 
-When an update is available, it can be installed directly from Kiwi. Update installers are cryptographically verified before installation.
-
-The updater is designed to perform the installation silently without requiring a separate update wizard.
-
-## Status
-
-Kiwi is currently in early development.
-
-The project is usable, but controls, commands, UI behavior, and internal systems may continue to change between releases.
-
-Current release:
+When an update is available, the Home screen displays:
 
 ```text
-v0.1.02
+Kiwi update available!  [I] Install  [L] Later
 ```
 
-## Contributing
+`I` downloads, verifies, and installs the update.
 
-Issues, bug reports, and suggestions are welcome.
+`L` dismisses the update for the current session.
+
+## License
+
+Kiwi is licensed under the [MIT License](LICENSE).
 
 ## Author
 
