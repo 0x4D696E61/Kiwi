@@ -1,3 +1,6 @@
+<p align="center">
+  <img src="assets/kiwi.png" alt="Kiwi Logo" width="160">
+</p>
 
 # KIWI 🥝
 

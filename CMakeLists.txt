@@ -1,13 +1,11 @@
 cmake_minimum_required(VERSION 3.25)
 
-project(Kiwi
-    VERSION 0.1.0
-    LANGUAGES CXX
-)
+project(Kiwi VERSION 0.1.0 LANGUAGES CXX RC)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 configure_file(
     src/updater/Version.hpp.in
     ${CMAKE_CURRENT_BINARY_DIR}/generated/Version.hpp
@@ -35,6 +33,8 @@ add_executable(kiwi
     src/tui/Painter.cpp
     src/updater/Updater.cpp
 )
+
+target_sources(kiwi PRIVATE assets/kiwi.rc)
 
 target_include_directories(kiwi PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}/generated
