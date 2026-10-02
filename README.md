@@ -5,7 +5,7 @@
 <h1 align="center">Kiwi 🥝</h1>
 
 <p align="center">
-  A lightweight, keyboard-driven terminal code editor written in C++23 for Windows.
+  A Windows-native modal terminal editor built around WASD navigation.
 </p>
 
 <p align="center">
@@ -29,6 +29,10 @@
   <a href="#building-from-source"><b>Build</b></a>
 </p>
 
+<p align="center">
+  <img src="assets/READMEScreenShot.png" alt="Kiwi editor showing a C++ project in Tree mode">
+</p>
+
 ## About
 
 Kiwi is a terminal code editor built around keyboard navigation, modal editing, and a simple workspace.
@@ -47,6 +51,7 @@ Kiwi is currently in early development.
 - Text and line selection
 - Clipboard support
 - Word navigation
+- In-file search with match highlighting
 - Undo and redo
 - Command bar
 - Configurable UI settings
@@ -79,6 +84,9 @@ Press and release `Left Ctrl` to return to NAV.
 | `S` | Move down |
 | `D` | Move right |
 | `Space` | Enter EDIT mode |
+| `/` | Search current file |
+| `n` | Next search match |
+| `N` | Previous search match |
 | `.` | Open command bar |
 | `1` | Undo |
 | `2` | Redo |
