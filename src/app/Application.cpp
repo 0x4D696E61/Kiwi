@@ -33,6 +33,8 @@
 
 #include "../tutorial/Tutorial.hpp"
 
+#include "../search/Search.hpp"
+
 #include <algorithm>
 #include <iostream>
 #include <string>
@@ -187,6 +189,8 @@ int Application::run() {
     Explorer explorer;
     Settings settings;
     Tutorial tutorial;
+    Search search;
+
     settings.load();
     explorer.setTree(settings.tree);
 
@@ -204,6 +208,9 @@ int Application::run() {
     Focus lcf = Focus::Editor; // the thing we last focused on
 
     std::string message;
+
+    std::string searchInput;
+    bool searchOpen = false;
 
     int scrollX = 0;
     int scrollY = 0;
@@ -426,7 +433,8 @@ int Application::run() {
         explorerScroll = std::max(0, explorerScroll);
 
         if (explVis) explorerView.render(explorer, explorerPainter, explorerScroll, focus == Focus::Explorer);
-        if (!buffer.path().empty()) editorView.renderTui(buffer, editor, editorPainter, scrollX, scrollY);
+        if (search.active()) search.refresh(buffer, editor.cX(), editor.cY());
+        if (!buffer.path().empty()) editorView.renderTui(buffer, editor, search, editorPainter, scrollX, scrollY);
 
         if (explVis && !buffer.path().empty() && settings.separator && panes[0].area.w > 0) {
             Style sep;
@@ -443,7 +451,7 @@ int Application::run() {
         const int commandY = statusY;
         const int barWidth = std::max(0, screen.w() - 1);
 
-        if (statusY >= 0 && !cmdBar.active() && message.empty()) {
+        if (statusY >= 0 && !cmdBar.active() && !searchOpen && message.empty()) {
             const Rgb baseBg{40, 46, 59};
             const Rgb modeBg = focus == Focus::Explorer ? kiwiTheme.matBracket : (editor.isTypeMode() ? kiwiTheme.folder : kiwiTheme.matBracket);
             const Rgb infoBg{65, 73, 94};
@@ -516,8 +524,32 @@ int Application::run() {
             }
         }
 
-        if (commandY >= 0 && (cmdBar.active() || !message.empty())) {
-            if (cmdBar.active()) {
+        if (commandY >= 0 && (cmdBar.active() || searchOpen || !message.empty())) {
+
+            if (searchOpen) {
+                Style bg;
+                bg.bgRgb = Rgb{36, 36, 36}; // bg.bgRgb :sob:
+                bg.fgRgb = kiwiTheme.file;
+
+                Style label = bg;
+                label.bgRgb = kiwiTheme.matBracket;
+                label.fgRgb = Rgb{255, 255, 255};
+                label.bold = true;
+
+                Style arrow = bg;
+                arrow.fgRgb = kiwiTheme.matBracket;
+
+                for (int x = 0; x < screen.w(); x++) screen.set(x, commandY, ' ', bg);
+
+                if (screen.w() >= 8) screen.text(0, commandY, " SEARCH ", label);
+                if (screen.w() > 8) screen.glyph(8, commandY, "\xEE\x82\xB0", arrow);
+                if (screen.w() > 10) screen.text(10, commandY, searchInput.substr(0, screen.w() - 10), bg);
+
+                cursorX = std::min(10 + static_cast<int>(searchInput.length()), std::max(0, screen.w() - 1));
+                cursorY = commandY;
+                showCursor = true;
+            } else if (cmdBar.active()) {
+
                 Style background;
                 background.bgRgb = Rgb{36, 36, 36};
                 background.fgRgb = kiwiTheme.file;
@@ -544,7 +576,7 @@ int Application::run() {
             }
         }
 
-        if (!cmdBar.active() && focus == Focus::Editor && !buffer.path().empty()) {
+        if (!cmdBar.active() && !searchOpen && focus == Focus::Editor && !buffer.path().empty()) {
             const int localX = gutter + editor.cX() - scrollX;
             const int localY = editor.cY() - scrollY;
 
@@ -560,7 +592,7 @@ int Application::run() {
         }
 
         tui.render(screen, cursorX, cursorY, showCursor);
-        const bool block = settings.blockCursor && !settingsOpen && !cmdBar.active() && focus == Focus::Editor && !editor.isTypeMode();
+        const bool block = settings.blockCursor && !settingsOpen && !cmdBar.active() && !searchOpen && focus == Focus::Editor && !editor.isTypeMode();
         if (cursorShape != static_cast<int>(block)) {
             std::cout << (block ? "\x1b[2 q" : "\x1b[6 q") << std::flush;
             cursorShape = static_cast<int>(block);
@@ -688,7 +720,7 @@ int Application::run() {
         }
 
         if (event.focSwitch) {
-            if (state == AppState::Editor && explVis && !cmdBar.active()) {
+            if (state == AppState::Editor && explVis && !cmdBar.active() && !searchOpen) {
                 if (focus == Focus::Explorer) {
                     focus = lcf;
                 } else {
@@ -781,6 +813,7 @@ int Application::run() {
                     } else if (buffer.modified()) {
                         message = "Unsaved changes! Use .save first.";
                     } else if (buffer.open(path)) {
+                        search.clear();
                         state = AppState::Editor;
                         home.addRecent(buffer.path());
                         editor.reset();
@@ -801,8 +834,77 @@ int Application::run() {
             continue;
         }
 
-        // Handle editor input unless the cmdbar is active
-        if (state == AppState::Editor && !cmdBar.active()) {
+        if (searchOpen) {
+            if (key == 27) {
+                searchOpen = false;
+                searchInput.clear();
+            
+                drawFrame();
+                continue;
+            }
+        
+            if (key == '\b' || event.keyCode == VK_BACK) {
+                if (!searchInput.empty()) searchInput.pop_back();
+            
+                drawFrame();
+                continue;
+            }
+        
+            if (key == '\r' || event.keyCode == VK_RETURN) {
+                searchOpen = false;
+
+                if (searchInput.empty()) {
+                    drawFrame();
+                    continue;
+                }
+            
+                search.find(buffer, searchInput, editor.cX(), editor.cY());
+            
+                const SearchMat* match = search.curr();
+            
+                if (match) {
+                    editor.movTo(match->x, match->y, buffer);
+                    message = std::to_string(search.idx() + 1) + "/" + std::to_string(search.count()) + " matches";
+                } else {
+                    message = "No matches for \"" + searchInput + "\"";
+                }
+            
+                drawFrame();
+                continue;
+            }
+        
+            if (key >= 32 && key <= 126) searchInput += key;
+        
+            drawFrame();
+            continue;
+        }
+
+        // Handle editor input unless the cmdbar or search is active
+        if (state == AppState::Editor && !cmdBar.active() && !searchOpen) {
+            if (!editor.isTypeMode() && key == '/') {
+                searchOpen = true;
+                searchInput.clear();
+                message.clear();
+
+                drawFrame();
+                continue;
+            }
+
+            if (!editor.isTypeMode() && (key == 'n' || key == 'N') && search.active()) {
+                if (key == 'n') search.next(buffer, editor.cX(), editor.cY());
+                else search.prev(buffer, editor.cX(), editor.cY());
+
+                const SearchMat* match = search.curr();
+
+                if (match) {
+                    editor.movTo(match->x, match->y, buffer);
+                    message = std::to_string(search.idx() + 1) + "/" + std::to_string(search.count()) + " matches";
+                }
+            
+                drawFrame();
+                continue;
+            }
+
             if (key == '.' && !editor.isTypeMode()) {
                 cmdBar.start();
                 message.clear();
@@ -825,6 +927,7 @@ int Application::run() {
             }
 
             editor.handleKey(key, buffer, clipboard);
+
             message.clear();
             drawFrame();
             continue;
@@ -865,6 +968,7 @@ int Application::run() {
                             continue;
                         }
 
+                        search.clear();
                         cmdBar.cancel();
                         state = AppState::Editor;
                         editor.reset();
@@ -1060,6 +1164,7 @@ int Application::run() {
 
                     if (delOpenf) {
                         buffer = Buffer{};
+                        search.clear();
                         editor.reset();
                         state = AppState::Editor;
                         focus = Focus::Explorer;
@@ -1142,6 +1247,7 @@ int Application::run() {
                     continue;
                 }
 
+                search.clear();
                 cmdBar.cancel();
                 state = AppState::Editor;
                 home.addRecent(buffer.path());
@@ -1193,6 +1299,7 @@ int Application::run() {
                     continue;
                 }
 
+                search.clear();
                 cmdBar.cancel();
                 state = AppState::Editor;
                 home.addRecent(buffer.path());

@@ -11,6 +11,8 @@
 
 #include "../syntax/Syntax.hpp"
 
+#include "../search/Search.hpp"
+
 #include <iostream>
 #include <algorithm>
 #include <string>
@@ -329,7 +331,7 @@ int EditorRenderer::gutterWidth(const Buffer& buffer) const {
 }
 
 
-void EditorRenderer::renderTui(const Buffer& buffer, const Editor& editor, Painter& painter, int scrollX, int scrollY) {
+void EditorRenderer::renderTui(const Buffer& buffer, const Editor& editor, const Search& search, Painter& painter, int scrollX, int scrollY) {
     painter.fill();
 
     const auto& lines = buffer.lines();
@@ -395,10 +397,29 @@ void EditorRenderer::renderTui(const Buffer& buffer, const Editor& editor, Paint
                 selec = as && be;
             }
 
+            bool searchMat = false;
+            bool currSearchMat = false;
+
+            const SearchMat* currMat = search.curr();
+
+            for (const SearchMat& mat : search.matches()) {
+                if (mat.y != lineY) continue;
+
+                if (lineX >= mat.x && lineX < mat.x + mat.length) {
+                    searchMat = true;
+
+                    if (currMat == &mat) currSearchMat = true;
+
+                    break;
+                }
+            }
+
             const char character = lineX < static_cast<int>(line.length()) ? line[lineX] : ' ';
 
             Style style;
             style.fgRgb = lineX < static_cast<int>(colors.size()) ? colors[lineX] : kiwiTheme.file;
+            if (searchMat) style.bgRgb = kiwiTheme.search;
+            if (currSearchMat) style.bgRgb = kiwiTheme.searchCurr;
             if (selec) style.bgRgb = kiwiTheme.selec;
                     
             painter.set(gutter + x, y, character, style);

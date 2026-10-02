@@ -6,6 +6,7 @@ class Buffer;
 class Editor;
 class Terminal;
 class Painter;
+class Search;
 
 class EditorRenderer {
 public:
@@ -22,7 +23,7 @@ public:
     void renderMessage(const std::string& message);
 
     int gutterWidth(const Buffer& buffer) const;
-    void renderTui(const Buffer& buffer, const Editor& editor, Painter& painter, int scrollX, int scrollY);
+    void renderTui(const Buffer& buffer, const Editor& editor, const Search& search, Painter& painter, int scrollX, int scrollY);
 
 private:
     Terminal& terminal_;

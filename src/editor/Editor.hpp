@@ -31,6 +31,8 @@ public:
     int cX() const;
     int cY() const;
 
+    void movTo(int x, int y, const Buffer& buffer);
+
 private:
     EditorMode mode_;
     EditHistory history_;

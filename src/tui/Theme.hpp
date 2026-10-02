@@ -21,6 +21,9 @@ struct Theme {
     Rgb matBracket{94, 112, 140};
     Rgb scopeGuide{70, 76, 91};
     Rgb separator{72, 78, 93};
+
+    Rgb search{70, 65, 35};
+    Rgb searchCurr{120, 100, 40};
 };
 
 inline Theme kiwiTheme;

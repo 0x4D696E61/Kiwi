@@ -475,3 +475,16 @@ int Editor::cX() const {
 int Editor::cY() const {
     return cY_;
 }
+
+void Editor::movTo(int x, int y, const Buffer& buffer) {
+    const auto& lines = buffer.lines();
+
+    if (lines.empty()) {
+        cX_ = 0;
+        cY_ = 0;
+        return;
+    }
+
+    cY_ = std::clamp(y, 0, static_cast<int>(lines.size()) - 1);
+    cX_ = std::clamp(x, 0, static_cast<int>(lines[cY_].length()));
+}
