@@ -33,6 +33,14 @@
   <img src="assets/READMEScreenShot.png" alt="Kiwi editor showing a C++ project in Tree mode">
 </p>
 
+<p align="center">
+  <img src="assets/KiwiDemo.gif" alt="Kiwi editor demo">
+</p>
+
+<p align="center">
+  <sub>Demo recorded in a virtual terminal. UI rendering may differ slightly from the native Windows Terminal experience.</sub>
+</p>
+
 ## About
 
 Kiwi is a terminal code editor built around keyboard navigation, modal editing, and a simple workspace.
