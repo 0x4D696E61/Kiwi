@@ -824,6 +824,8 @@ int Application::run() {
                         currDir = path.parent_path();
                         revealFile(path);
                         message.clear();
+                        terminal.clear();
+                        tui.invalidate();
                     } else {
                         message = "Could not open file";
                     }
