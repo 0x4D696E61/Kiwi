@@ -42,6 +42,11 @@ private:
     void movpWord(const Buffer& buffer);
     void movnWord(const Buffer& buffer);
 
+    void movpWORD(const Buffer& buffer);
+    void movnWORD(const Buffer& buffer);
+
+    void movMatch(const Buffer& buffer);
+
     void toggleSelec();
     void updSelec();
 

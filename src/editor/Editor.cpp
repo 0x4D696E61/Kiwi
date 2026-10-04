@@ -107,19 +107,46 @@ void Editor::handleKey(char key, Buffer& buffer, const Clipboard& clipboard) {
         return;
     }
 
+    if (key == '%') {
+        pendingKeys_.clear();
+        movMatch(buffer);
+        return;
+    }
+
     // key sequences eg qq rr xx cc cv ca
-    if (key == 'q' || key == 'r' || key == 'x' || key == 'c') {
-        if (pendingKeys_.empty() || pendingKeys_[0] == key) {
-            pendingKeys_ += key;
+    if (key == 'q' || key == 'Q' || key == 'r' || key == 'R' || key == 'x' || key == 'c' || key == 'g' || key == 'G') {
+        if (pendingKeys_.empty()) {
+            pendingKeys_ = key;
         } else {
-            pendingKeys_ = std::string(1, key);
+            pendingKeys_ += key;
         }
 
         if (pendingKeys_ == "qq") {
             movpWord(buffer);
             pendingKeys_.clear();
+        } else if (pendingKeys_ == "qQ") {
+            movpWORD(buffer);
+            pendingKeys_.clear();
         } else if (pendingKeys_ == "rr") {
             movnWord(buffer);
+            pendingKeys_.clear();
+        } else if (pendingKeys_ == "rR") {
+            movnWORD(buffer);
+            pendingKeys_.clear();
+        } else if (pendingKeys_ == "gg") {
+            cY_ = 0;
+            cX_ = 0;
+            updSelec();
+            pendingKeys_.clear();
+        } else if (pendingKeys_ == "GG") {
+            const auto& lines = buffer.lines();
+        
+            if (!lines.empty()) {
+                cY_ = static_cast<int>(lines.size()) - 1;
+                cX_ = 0;
+                updSelec();
+            }
+        
             pendingKeys_.clear();
         } else if (pendingKeys_ == "xx") {
             chwrd(buffer);
@@ -139,6 +166,18 @@ void Editor::handleKey(char key, Buffer& buffer, const Clipboard& clipboard) {
     if (lines.empty()) {
         cX_ = 0;
         cY_ = 0;
+        return;
+    }
+
+    if (key == 'A') {
+        cX_ = 0;
+        updSelec();
+        return;
+    }
+
+    if (key == 'D') {
+        cX_ = static_cast<int>(lines[cY_].length());
+        updSelec();
         return;
     }
 
@@ -236,7 +275,7 @@ void Editor::movpWord(const Buffer& buffer) {
         cX_--;
     }
 
-    // Move to the beginning of the prev or current word
+    // Move to the beginning of the prev or curr word
     if (cX_ > 0 && iswc(line[cX_ - 1])) {
         while (cX_ > 0 && iswc(line[cX_ - 1])) {
             cX_--;
@@ -274,7 +313,7 @@ void Editor::movnWord(const Buffer& buffer) {
         cX_++;
     }
 
-    // Move past the current word
+    // Move past the curr word
     if (cX_ < len && iswc(line[cX_])) {
         while (cX_ < len && iswc(line[cX_])) {
             cX_++;
@@ -284,6 +323,139 @@ void Editor::movnWord(const Buffer& buffer) {
     }
 
     updSelec();
+}
+
+void Editor::movpWORD(const Buffer& buffer) {
+    const auto& lines = buffer.lines();
+
+    if (lines.empty()) return;
+
+    if (cX_ == 0) {
+        if (cY_ == 0) return;
+
+        cY_--;
+        cX_ = static_cast<int>(lines[cY_].length());
+    }
+
+    const std::string& line = lines[cY_];
+
+    while (cX_ > 0 && std::isspace(static_cast<unsigned char>(line[cX_ - 1]))) {
+        cX_--;
+    }
+
+    while (cX_ > 0 && !std::isspace(static_cast<unsigned char>(line[cX_ - 1]))) {
+        cX_--;
+    }
+
+    updSelec();
+}
+
+void Editor::movnWORD(const Buffer& buffer) {
+    const auto& lines = buffer.lines();
+
+    if (lines.empty()) return;
+
+    const std::string& line = lines[cY_];
+    const int len = static_cast<int>(line.length());
+
+    if (cX_ >= len) {
+        if (cY_ + 1 < static_cast<int>(lines.size())) {
+            cY_++;
+            cX_ = 0;
+        }
+
+        updSelec();
+        return;
+    }
+
+    while (cX_ < len && !std::isspace(static_cast<unsigned char>(line[cX_]))) {
+        cX_++;
+    }
+
+    while (cX_ < len && std::isspace(static_cast<unsigned char>(line[cX_]))) {
+        cX_++;
+    }
+
+    updSelec();
+}
+
+void Editor::movMatch(const Buffer& buffer) {
+    const auto& lines = buffer.lines();
+
+    if (lines.empty()) return;
+
+    const std::string& line = lines[cY_];
+
+    if (cX_ < 0 || cX_ >= static_cast<int>(line.length())) return;
+
+    const char curr = line[cX_];
+
+    char match = 0;
+    int dir = 0;
+
+    if (curr == '(') {
+        match = ')';
+        dir = 1;
+    } else if (curr == '[') {
+        match = ']';
+        dir = 1;
+    } else if (curr == '{') {
+        match = '}';
+        dir = 1;
+    } else if (curr == ')') {
+        match = '(';
+        dir = -1;
+    } else if (curr == ']') {
+        match = '[';
+        dir = -1;
+    } else if (curr == '}') {
+        match = '{';
+        dir = -1;
+    } else {
+        return;
+    }
+
+    int depth = 0;
+    int y = cY_;
+    int x = cX_;
+
+    while (true) {
+        x += dir;
+
+        if (dir > 0) {
+            while (y < static_cast<int>(lines.size()) && x >= static_cast<int>(lines[y].length())) {
+                y++;
+                x = 0;
+            }
+
+            if (y >= static_cast<int>(lines.size())) return;
+        } else {
+            while (y >= 0 && x < 0) {
+                y--;
+
+                if (y >= 0) {
+                    x = static_cast<int>(lines[y].length()) - 1;
+                }
+            }
+
+            if (y < 0) return;
+        }
+
+        const char character = lines[y][x];
+
+        if (character == curr) {
+            depth++;
+        } else if (character == match) {
+            if (depth == 0) {
+                cX_ = x;
+                cY_ = y;
+                updSelec();
+                return;
+            }
+
+            depth--;
+        }
+    }
 }
 
 void Editor::toggleSelec() {

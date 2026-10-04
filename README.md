@@ -74,88 +74,63 @@ After installation, Kiwi can check for new versions automatically. Available upd
 
 ## Controls
 
-Kiwi uses two editor modes:
+Kiwi uses **NAV** for navigation and commands and **EDIT** for writing.
 
-- **NAV** for navigation and commands
-- **EDIT** for writing text
-
-Press `Space` in NAV to enter EDIT.
-
-Press and release `Left Ctrl` to return to NAV.
+`Space` enters EDIT · `Left Ctrl` returns to NAV · `Left Ctrl + Space` switches Explorer/Editor focus
 
 ### NAV
 
-| Key | Action |
-| --- | --- |
-| `W` | Move up |
-| `A` | Move left |
-| `S` | Move down |
-| `D` | Move right |
-| `Space` | Enter EDIT mode |
-| `/` | Search current file |
-| `n` | Next search match |
-| `N` | Previous search match |
-| `.` | Open command bar |
-| `1` | Undo |
-| `2` | Redo |
-| `qq` | Previous word |
-| `rr` | Next word |
-| `xx` | Change word and enter EDIT |
-| `v` | Toggle selection |
-| `Shift + V` | Select current line |
-| `cc` | Copy current line |
-| `cv` | Copy selection |
-| `ca` | Paste |
+| Navigation | Action | Navigation | Action |
+| --- | --- | --- | --- |
+| `W` | Up | `S` | Down |
+| `A` | Left | `D` | Right |
+| `qq` | Previous word | `rr` | Next word |
+| `qQ` | Previous WORD | `rR` | Next WORD |
+| `Shift + A` | Start of line | `Shift + D` | End of line |
+| `gg` | Start of file | `GG` | End of file |
+| `%` | Matching bracket | `xx` | Change word + EDIT |
+
+| Editing / Search | Action | Editing / Search | Action |
+| --- | --- | --- | --- |
+| `v` | Toggle selection | `Shift + V` | Select line |
+| `cc` | Copy line | `cv` | Copy selection |
+| `ca` | Paste | `/` | Search file |
+| `n` | Next match | `N` | Previous match |
+| `1` | Undo | `2` | Redo |
+| `Space` | Enter EDIT | `.` | Command bar |
 
 Moving while a selection is active extends the selection.
 
+**WORD** navigation treats any sequence of non-whitespace characters as one WORD.
+
 ### EDIT
 
-| Key | Action |
-| --- | --- |
-| Normal keys | Insert text |
-| `Enter` | New line |
-| `Backspace` | Delete character or merge lines |
-| `Tab` | Insert 4 spaces |
-| `Left Ctrl` | Return to NAV when released |
+| Key | Action | Key | Action |
+| --- | --- | --- | --- |
+| Normal keys | Insert text | `Enter` | New line |
+| `Backspace` | Delete / merge lines | `Tab` | Insert 4 spaces |
+| `Left Ctrl` | Return to NAV | | |
 
-### Explorer
+### Explorer, Home & Settings
 
-| Key | Action |
-| --- | --- |
-| `W` | Move up |
-| `S` | Move down |
-| `Enter` | Open file or directory |
-| `Backspace` | Go to parent directory |
-| `.` | Open command bar |
-| `Left Ctrl + Space` | Switch between Explorer and Editor |
+| Context | Key | Action |
+| --- | --- | --- |
+| Explorer | `W` / `S` | Move up / down |
+| Explorer | `Enter` | Open file/directory or toggle Tree directory |
+| Explorer | `Backspace` | Parent directory |
+| Explorer | `.` | Command bar |
+| Explorer | `Left Ctrl + Space` | Switch Explorer/Editor focus |
+| Home | `N` | New file |
+| Home | `O` | Open file |
+| Home | `S` | Settings |
+| Home | `1` - `9` | Open recent file |
+| Home | `.` | Command bar |
+| Settings | `A` / `W` | Previous setting |
+| Settings | `D` / `S` | Next setting |
+| Settings | `Enter` | Toggle setting |
+| Settings | `Esc` | Close Settings |
 
-In Tree mode, `Enter` expands or collapses directories.
-
-### Home
-
-| Key | Action |
-| --- | --- |
-| `N` | Create a new file |
-| `O` | Open a file |
-| `S` | Open Settings |
-| `1` - `9` | Open a recent file |
-| `.` | Open command bar |
-
-### Settings
-
-| Key | Action |
-| --- | --- |
-| `A` / `W` | Previous setting |
-| `D` / `S` | Next setting |
-| `Enter` | Toggle setting |
-| `Esc` | Close Settings |
-
-Current settings include:
-
-- Simple or Tree explorer
-- Explorer/Editor separator
-- NAV block cursor
+Settings currently include Simple/Tree explorer, the Explorer/Editor separator, and the NAV block cursor.
 
 ## Commands
 
