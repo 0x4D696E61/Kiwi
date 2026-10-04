@@ -4,14 +4,14 @@
     <title>Kiwi Updates</title>
     <description>Kiwi automatic updates</description>
     <item>
-      <title>Kiwi 0.2.03</title>
-      <description>Kiwi 0.2.03 - Advanced Navigation.</description>
+      <title>Kiwi 0.2.04</title>
+      <description>Kiwi 0.2.04 - Editing and updater improvements.</description>
       <enclosure
-        url="https://github.com/0x4D696E61/Kiwi/releases/download/v0.2.03/Kiwi-Setup-0.2.03.exe"
-        sparkle:version="0.2.03"
-        sparkle:shortVersionString="0.2.03"
-        sparkle:edSignature="ZLW9uiZOCpm2P4+r255R7QJWNnbrvHGzjHDHNuIotRJO/muaLk45LC0o+htsJRR+xweV9muYcWit9tZ6GfdJDw=="
-        length="4511231"
+        url="https://github.com/0x4D696E61/Kiwi/releases/download/v0.2.04/Kiwi-Setup-0.2.04.exe"
+        sparkle:version="0.2.04"
+        sparkle:shortVersionString="0.2.04"
+        sparkle:edSignature="miXeSpTAhYijSv5+v9D4fxU/tBsB6BDWsoz2KGU2Y8QpfUiW5fWjs6TWl48BPOqNpbtD1PGqUPZWGQupdH2xDw=="
+        length="4512595"
         type="application/octet-stream"
       />
     </item>
