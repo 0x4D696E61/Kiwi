@@ -1,4 +1,3 @@
-
 #include "Updater.hpp"
 #include "Version.hpp"
 
@@ -20,32 +19,20 @@ struct UpdateInfo {
     std::string version;
     std::string url;
     std::string sig;
+
+    bool mandatory = false;
 };
 
 static UpdateInfo fetchUpdate(const char* url) {
-    HINTERNET session = InternetOpenA(
-        "Kiwi Updater",
-        INTERNET_OPEN_TYPE_PRECONFIG, // help me
-        nullptr,
-        nullptr,
-        0
-    );
+    HINTERNET session = InternetOpenA("Kiwi Updater", INTERNET_OPEN_TYPE_PRECONFIG, nullptr, nullptr, 0);
 
     if (!session) return {};
 
     DWORD timeout = 5000;
-
     InternetSetOptionA(session, INTERNET_OPTION_CONNECT_TIMEOUT, &timeout, sizeof(timeout));
     InternetSetOptionA(session, INTERNET_OPTION_RECEIVE_TIMEOUT, &timeout, sizeof(timeout));
 
-    HINTERNET request = InternetOpenUrlA(
-        session, //please
-        url,
-        nullptr,
-        0,
-        INTERNET_FLAG_RELOAD | INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_NO_UI,
-        0
-    );
+    HINTERNET request = InternetOpenUrlA( session, url, nullptr, 0, INTERNET_FLAG_RELOAD | INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_NO_UI, 0);
 
     if (!request) {
         InternetCloseHandle(session);
@@ -55,13 +42,7 @@ static UpdateInfo fetchUpdate(const char* url) {
     DWORD status = 0;
     DWORD length = sizeof(status);
 
-    const bool valid = HttpQueryInfoA(
-        request,
-        HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER,
-        &status,
-        &length,
-        nullptr // im crying
-    ) && status == 200;
+    const bool valid = HttpQueryInfoA(request, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &length, nullptr) && status == 200;
 
     std::string xml;
     bool success = valid;
@@ -108,6 +89,7 @@ static UpdateInfo fetchUpdate(const char* url) {
     info.version = vMatch[1].str();
     info.url = urlMatch[1].str();
     info.sig = sigMatch[1].str();
+    info.mandatory = xml.find("<sparkle:criticalUpdate") != std::string::npos;
 
     return info;
 }
@@ -150,6 +132,7 @@ bool Updater::start(const char* url) {
     if (running || !url || !*url) return false;
 
     HMODULE lib = LoadLibraryW(L"WinSparkle.dll");
+
     if (!lib) return false;
 
     using SetUrl = void (*)(const char*);
@@ -182,6 +165,7 @@ bool Updater::start(const char* url) {
     dll = lib;
     running = true;
     updateAvailable.store(false);
+    mandatoryUpdate.store(false);
 
     worker = std::jthread([this, feed = std::string(url)](std::stop_token stop) {
         const UpdateInfo info = fetchUpdate(feed.c_str());
@@ -189,6 +173,7 @@ bool Updater::start(const char* url) {
         if (!stop.stop_requested() && newerVersion(info.version)) {
             updateUrl = info.url;
             updateSignature = info.sig;
+            mandatoryUpdate.store(info.mandatory);
             updateAvailable.store(true);
         }
     });
@@ -200,8 +185,13 @@ bool Updater::available() const {
     return updateAvailable.load();
 }
 
+bool Updater::mandatory() const {
+    return mandatoryUpdate.load();
+}
+
 bool Updater::download(const std::string& url, const std::string& path) {
     HINTERNET session = InternetOpenA("Kiwi Updater", INTERNET_OPEN_TYPE_PRECONFIG, nullptr, nullptr, 0);
+
     if (!session) return false;
 
     HINTERNET req = InternetOpenUrlA(session, url.c_str(), nullptr, 0, INTERNET_FLAG_RELOAD | INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_NO_UI, 0);
@@ -252,18 +242,20 @@ bool Updater::verify(const std::string& path, const std::string& sig) {
     if (sig.empty()) return false;
 
     char exePath[MAX_PATH]{};
+
     if (!GetModuleFileNameA(nullptr, exePath, MAX_PATH)) return false;
 
     std::string folder = exePath;
     const size_t slash = folder.find_last_of("\\/");
+
     if (slash == std::string::npos) return false;
 
     folder.resize(slash + 1);
 
     const std::string tool = folder + "winsparkle-tool.exe";
     const std::string key = "uXpNiUW2a3dw/fcrLM2K3Z22cwdyRHCVFcR9xead7H8=";
-
     std::string command = "\"" + tool + "\" verify --public-key \"" + key + "\" --signature \"" + sig + "\" \"" + path + "\"";
+
     std::vector<char> commandLine(command.begin(), command.end());
     commandLine.push_back('\0');
 
@@ -286,7 +278,12 @@ bool Updater::verify(const std::string& path, const std::string& sig) {
 }
 
 void Updater::installUpdate(const std::string& path) {
-    std::string command = "/C timeout /T 1 /NOBREAK >NUL & \"" + path + "\" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART";
+    char exePath[MAX_PATH]{};
+
+    if (!GetModuleFileNameA(nullptr, exePath, MAX_PATH)) return;
+
+    const std::string command = "/C timeout /T 1 /NOBREAK >NUL & start \"\" /wait \"" + path + "\" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART & start \"\" \"" + std::string(exePath) + "\"";
+
     HINSTANCE res = ShellExecuteA(nullptr, "open", "cmd.exe", command.c_str(), nullptr, SW_HIDE);
 
     if (reinterpret_cast<INT_PTR>(res) <= 32) return;
@@ -298,6 +295,7 @@ void Updater::install() {
     if (!running || !available() || updateUrl.empty() || updateSignature.empty()) return;
 
     char tempPath[MAX_PATH]{};
+
     if (!GetTempPathA(MAX_PATH, tempPath)) return;
 
     const std::string path = std::string(tempPath) + "Kiwi-Update.exe";
@@ -333,6 +331,7 @@ void Updater::stop() {
     dll = nullptr;
     running = false;
     updateAvailable.store(false);
+    mandatoryUpdate.store(false);
 }
 
 Updater::~Updater() {

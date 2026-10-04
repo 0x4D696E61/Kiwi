@@ -12,6 +12,7 @@ public:
     void stop();
 
     bool available() const;
+    bool mandatory() const;
     void install();
 
 private:
@@ -26,5 +27,6 @@ private:
     std::string updateSignature;
 
     std::atomic<bool> updateAvailable{false};
+    std::atomic<bool> mandatoryUpdate{false};
     std::jthread worker;
 };

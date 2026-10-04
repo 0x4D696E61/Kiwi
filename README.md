@@ -60,7 +60,8 @@ Kiwi is currently in early development.
 - Clipboard support
 - Word navigation
 - In-file search with match highlighting
-- Undo and redo
+- Automatic bracket and quote pairing
+- Smart indentation
 - Command bar
 - Configurable UI settings
 - Automatic updates
@@ -94,9 +95,9 @@ Kiwi uses **NAV** for navigation and commands and **EDIT** for writing.
 | --- | --- | --- | --- |
 | `v` | Toggle selection | `Shift + V` | Select line |
 | `cc` | Copy line | `cv` | Copy selection |
-| `ca` | Paste | `/` | Search file |
+| `ca` | Paste | `xa` | Change line + EDIT |
+| `xv` | Change selection + EDIT | `/` | Search file |
 | `n` | Next match | `N` | Previous match |
-| `1` | Undo | `2` | Redo |
 | `Space` | Enter EDIT | `.` | Command bar |
 
 Moving while a selection is active extends the selection.
@@ -210,15 +211,9 @@ cmake --build --preset debug
 
 Kiwi checks for updates when it starts.
 
-When an update is available, the Home screen displays:
+Optional updates can be installed or dismissed from the Home screen. Mandatory updates install automatically.
 
-```text
-Kiwi update available!  [I] Install  [L] Later
-```
-
-`I` downloads, verifies, and installs the update.
-
-`L` dismisses the update for the current session.
+Kiwi automatically restarts after a successful update.
 
 ## License
 

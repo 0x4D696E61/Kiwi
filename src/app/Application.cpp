@@ -198,6 +198,7 @@ int Application::run() {
     bool updateShown = false;
 
     const std::string updateMsg = "Kiwi update available!  [I] Install  [L] Later";
+    const std::string mandatoryUpdateMsg = "Installing Kiwi update...";
     bool settingsOpen = false;
     int settingIndex = 0;
     float uTab = 0.0f;
@@ -637,23 +638,40 @@ int Application::run() {
         }
 
         if (state == AppState::Home && !settingsOpen && !cmdBar.active() && updater_.available() && !updateLatuh && message.empty()) {
+            if (updater_.mandatory()) {
+                if (!updateShown) {
+                    if (hTreeOpen) {
+                        message = mandatoryUpdateMsg;
+                        drawFrame();
+                    } else {
+                        home.renderMsg(mandatoryUpdateMsg);
+                    }
+                
+                    updateShown = true;
+                    updater_.install();
+                }
+            
+                continue;
+            }
+        
             if (!updateShown) {
                 if (hTreeOpen) drawFrame();
                 else home.renderMsg(updateMsg);
                 updateShown = true;
             }
-
+        
             if (event.keyDown && (key == 'i' || key == 'I')) {
                 updater_.install();
                 continue;
             }
-
+        
             if (event.keyDown && (key == 'l' || key == 'L')) {
                 updateLatuh = true;
                 updateShown = false;
-
+            
                 if (hTreeOpen) drawFrame();
                 else renderHome();
+            
                 continue;
             }
         } else {
@@ -914,7 +932,7 @@ int Application::run() {
                 continue;
             }
 
-            if (!editor.isTypeMode() && key == '1') {
+            /*if (!editor.isTypeMode() && key == '1') {
                 editor.undo(buffer);
                 message.clear();
                 drawFrame();
@@ -926,7 +944,7 @@ int Application::run() {
                 message.clear();
                 drawFrame();
                 continue;
-            }
+            }*/
 
             editor.handleKey(key, buffer, clipboard);
 

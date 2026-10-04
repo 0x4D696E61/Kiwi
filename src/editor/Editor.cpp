@@ -25,21 +25,64 @@ void Editor::handleKey(char key, Buffer& buffer, const Clipboard& clipboard) {
         // Backspace
         if (key == '\b') {
             if (cX_ > 0) {
+                const auto& lines = buffer.lines();
+                const std::string& line = lines[cY_];
+            
+                if (cX_ < static_cast<int>(line.length())) {
+                    const char left = line[cX_ - 1];
+                    const char right = line[cX_];
+                    const bool pair = (left == '(' && right == ')') || (left == '[' && right == ']') || (left == '{' && right == '}') || (left == '"' && right == '"') || (left == '\'' && right == '\'');
+                
+                    if (pair) {
+                        buffer.deleteChar(cX_ + 1, cY_);
+                        buffer.deleteChar(cX_, cY_);
+                        cX_--;
+                        return;
+                    }
+                }
+            
                 buffer.deleteChar(cX_, cY_);
                 cX_--;
             } else if (cY_ > 0) {
                 cX_ = buffer.mergeLine(cY_);
                 cY_--;
             }
-
+        
             return;
         }
 
         // Enter
         if (key == '\r') {
+            const auto& lines = buffer.lines();
+            const std::string line = lines[cY_];
+        
+            int indent = 0;
+            while (indent < static_cast<int>(line.length()) && line[indent] == ' ') indent++;
+        
+            const bool bracePair = cX_ > 0 && cX_ < static_cast<int>(line.length()) && line[cX_ - 1] == '{' && line[cX_] == '}';
+        
+            if (bracePair) {
+                buffer.insertLine(cX_, cY_);
+                cY_++;
+                for (int i = 0; i < indent; i++) buffer.insertChar(i, cY_, ' ');
+                buffer.insertLine(indent, cY_);
+                for (int i = 0; i < indent + 4; i++) buffer.insertChar(i, cY_, ' ');
+                cX_ = indent + 4;
+                return;
+            }
+        
+            if (cX_ <= indent && !line.empty()) {
+                buffer.insertLine(cX_, cY_);
+                cY_++;
+                return;
+            }
+        
             buffer.insertLine(cX_, cY_);
             cY_++;
-            cX_ = 0;
+        
+            for (int i = 0; i < indent; i++) buffer.insertChar(i, cY_, ' ');
+        
+            cX_ = indent;
             return;
         }
 
@@ -54,14 +97,40 @@ void Editor::handleKey(char key, Buffer& buffer, const Clipboard& clipboard) {
             return;
         }
 
-        // All normal buttons on a fucking keyboard
+        // All normal chars and symbols on a fucking keyboard
+        if (key == ')' || key == ']' || key == '}' || key == '"' || key == '\'') {
+            const auto& lines = buffer.lines();
+
+            if (cY_ < static_cast<int>(lines.size()) && cX_ < static_cast<int>(lines[cY_].length()) && lines[cY_][cX_] == key) {
+                cX_++;
+                return;
+            }
+        }
+
+        char close = 0;
+
+        if (key == '(') close = ')';
+        else if (key == '[') close = ']';
+        else if (key == '{') close = '}';
+        else if (key == '"') close = '"';
+        else if (key == '\'') close = '\'';
+
+        if (close != 0) {
+            //history_.push({EditActionType::InsertChar, cX_, cY_, std::string(1, key)});
+
+            buffer.insertChar(cX_, cY_, key);
+            buffer.insertChar(cX_ + 1, cY_, close);
+            cX_++;
+            return;
+        }
+
         if (key >= 32 && key <= 126) {
-            history_.push({
+            /*history_.push({
                 EditActionType::InsertChar,
                 cX_,                           // My hands will hurt forever due to writing code like that...
                 cY_,
                 std::string(1, key)
-            });
+            });*/
 
             buffer.insertChar(cX_, cY_, key); // finally one line again :D
             cX_++;
@@ -82,11 +151,11 @@ void Editor::handleKey(char key, Buffer& buffer, const Clipboard& clipboard) {
         return;
     }
 
-    if (key == 'v') {
-        toggleSelec();
-        pendingKeys_.clear();
-        return;
-    }
+    if (key == 'v' && pendingKeys_ != "x") {
+    toggleSelec();
+    pendingKeys_.clear();
+    return;
+}
 
     if (key == 'V') {
         const auto& lines = buffer.lines();
@@ -113,14 +182,14 @@ void Editor::handleKey(char key, Buffer& buffer, const Clipboard& clipboard) {
         return;
     }
 
-    // key sequences eg qq rr xx cc cv ca
-    if (key == 'q' || key == 'Q' || key == 'r' || key == 'R' || key == 'x' || key == 'c' || key == 'g' || key == 'G') {
+    // key sequences eg qq qQ rr rR xx xa xv cc cv ca gg GG
+    if (key == 'q' || key == 'Q' || key == 'r' || key == 'R' || key == 'x' || key == 'c' || key == 'g' || key == 'G' || (pendingKeys_ == "x" && (key == 'a' || key == 'v'))) {
         if (pendingKeys_.empty()) {
             pendingKeys_ = key;
         } else {
             pendingKeys_ += key;
         }
-
+    
         if (pendingKeys_ == "qq") {
             movpWord(buffer);
             pendingKeys_.clear();
@@ -151,11 +220,66 @@ void Editor::handleKey(char key, Buffer& buffer, const Clipboard& clipboard) {
         } else if (pendingKeys_ == "xx") {
             chwrd(buffer);
             pendingKeys_.clear();
+        } else if (pendingKeys_ == "xa" || pendingKeys_ == "xv") {
+            const bool deleteSelection = selection_.active;
+        
+            if (deleteSelection) {
+                int startX = selection_.startX;
+                int startY = selection_.startY;
+                int endX = selection_.endX;
+                int endY = selection_.endY;
+            
+                if (startY > endY || (startY == endY && startX > endX)) {
+                    std::swap(startX, endX);
+                    std::swap(startY, endY);
+                }
+            
+                if (lineSelec_) {
+                    startX = 0;
+                    endX = static_cast<int>(buffer.lines()[endY].length());
+                
+                    if (endY + 1 < static_cast<int>(buffer.lines().size())) {
+                        endY++;
+                        endX = 0;
+                    }
+                }
+            
+                if (startY == endY) {
+                    buffer.deleteRange(startX, endX, startY);
+                } else {
+                    const std::string left = buffer.lines()[startY].substr(0, startX);
+                    const std::string right = buffer.lines()[endY].substr(endX);
+                
+                    buffer.deleteRange(startX, static_cast<int>(buffer.lines()[startY].length()), startY);
+                    buffer.deleteRange(0, endX, endY);
+                
+                    for (int y = endY; y > startY; y--) buffer.mergeLine(y);
+                
+                    const int joined = static_cast<int>(buffer.lines()[startY].length());
+                    buffer.deleteRange(0, joined, startY);
+                    buffer.insertText(0, startY, left + right);
+                }
+            
+                cX_ = startX;
+                cY_ = startY;
+            } else if (pendingKeys_ == "xa") {
+                const auto& lines = buffer.lines();
+
+                if (!lines.empty()) {
+                    buffer.deleteRange(0, static_cast<int>(lines[cY_].length()), cY_);
+                    cX_ = 0;
+                }
+            }
+        
+            selection_ = {};
+            lineSelec_ = false;
+            mode_ = EditorMode::Type;
+            pendingKeys_.clear();
         } else if (pendingKeys_ == "cc") {
             cpLine(buffer, clipboard);
             pendingKeys_.clear();
         }
-
+    
         return;
     }
 
@@ -218,8 +342,11 @@ void Editor::reset() {
 
     selection_ = {};
     pendingKeys_.clear();
-    history_.clear();
+    //history_.clear();
 }
+
+/*
+MASSIVELY BUGGED AND SHIT IMPLEMENTATION o7
 
 void Editor::undo(Buffer& buffer) {
     if (!history_.canUndo()) {
@@ -250,6 +377,8 @@ void Editor::redo(Buffer& buffer) {
         cY_ = action.y;
     }
 }
+
+*/
 
 void Editor::movpWord(const Buffer& buffer) {
     const auto& lines = buffer.lines();

@@ -17,8 +17,8 @@ public:
     void enterMoveMode();
     void reset();
 
-    void undo(Buffer& buffer);
-    void redo(Buffer& buffer);
+    //void undo(Buffer& buffer);
+    //void redo(Buffer& buffer);
 
     bool isTypeMode() const;
     bool isRunning() const;
@@ -35,7 +35,7 @@ public:
 
 private:
     EditorMode mode_;
-    EditHistory history_;
+    //EditHistory history_;
     bool running_;
     bool lineSelec_ = false;
 
