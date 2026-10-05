@@ -3,18 +3,17 @@
   <channel>
     <title>Kiwi Updates</title>
     <description>Kiwi automatic updates</description>
-    <item>
-      <title>Kiwi 0.2.07</title>
-      <description>Kiwi 0.2.07 - Automatic restart flow improvements.</description>
 
-      <sparkle:criticalUpdate />
+    <item>
+      <title>Kiwi 0.2.08</title>
+      <description>Kiwi 0.2.08 - Goto line navigation.</description>
 
       <enclosure
-        url="https://github.com/0x4D696E61/Kiwi/releases/download/v0.2.07/Kiwi-Setup-0.2.07.exe"
-        sparkle:version="0.2.07"
-        sparkle:shortVersionString="0.2.07"
-        sparkle:edSignature="1dNW3vMH99CjMMcDG4ewaoEGQXHJIuWwm2i78qTjFa+6qyHmJD3oV2ANnoEG6ruvBLacXR5QoWNG3LCeWqWpAw=="
-        length="4520264"
+        url="https://github.com/0x4D696E61/Kiwi/releases/download/v0.2.08/Kiwi-Setup-0.2.08.exe"
+        sparkle:version="0.2.08"
+        sparkle:shortVersionString="0.2.08"
+        sparkle:edSignature="vLPCHo/kSurSWv4j/F6SoN92LOo6ZnXFwyQFdXyHpkACdLpMofj9iKzo6T7nggMHMvnM5FWD/CUI2NMyqlOOCA=="
+        length="4525677"
         type="application/octet-stream"
       />
     </item>
