@@ -27,11 +27,12 @@ void Screen::clear() {
 
 void Screen::set(int x, int y, char ch, const Style& style) {
     if (x < 0 || y < 0 || x >= width_ || y >= height_) return;
-
+    
     Cell& cell = cells_[index(x, y)];
-
+    
     cell.ch = ch;
     cell.style = style;
+    cell.glyph.clear();
 }
 
 void Screen::text(int x, int y, const std::string& text, const Style& style) {

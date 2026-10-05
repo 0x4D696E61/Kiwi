@@ -16,6 +16,9 @@ private:
     bool ctrlHeld_ = false;
     bool ctrlUsed_ = false;
     bool focUsed_ = false;
+    bool mouseHeld_ = false;
+    int mouseX_ = 0;
+    int mouseY_ = 0;
 
     KeyEvent repeatEvent_{};
     unsigned short repeatsL_ = 0;

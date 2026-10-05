@@ -23,7 +23,10 @@ public:
     void renderMessage(const std::string& message);
 
     int gutterWidth(const Buffer& buffer) const;
-    void renderTui(const Buffer& buffer, const Editor& editor, const Search& search, Painter& painter, int scrollX, int scrollY);
+    int visRow(const Buffer& buffer, int lineY, int colX, int textW) const;
+    int visRows(const Buffer& buffer, int textW) const;
+    bool posFromVis(const Buffer& buffer, int visRow, int visCol, int textW, int& outX, int& outY) const;
+    void renderTui(const Buffer& buffer, const Editor& editor, const Search& search, Painter& painter, int scrollX, int scrollY, bool wordWrap);
 
 private:
     Terminal& terminal_;

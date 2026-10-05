@@ -117,11 +117,11 @@ static void drawSettings(Screen& screen, const Settings& settings, int selected,
     screen.text(x + 2, y + 1, "SETTINGS", title);
     screen.text(x + w - 13, y + 1, "ESC", inactive);
 
-    const std::string tabs[3] = {"Explorer", "Appearance", "Cursor"};
-    const int gap = 2;
-    const int tabW = (w - 4 - gap * 2) / 3;
-
-    for (int i = 0; i < 3; i++) {
+    const std::string tabs[5] = {"Explorer", "Editor", "Appearance", "Cursor", "Quit"};
+    const int gap = 1;
+    const int tabW = (w - 4 - gap * 4) / 5;
+    
+    for (int i = 0; i < 5; i++) {
         const int tabX = x + 2 + i * (tabW + gap);
         const bool focused = selected == i;
         const Style& labelStyle = focused ? active : inactive;
@@ -140,22 +140,28 @@ static void drawSettings(Screen& screen, const Settings& settings, int selected,
 
     roundedBox(x + 1, y + 8, w - 2, 5, inactive);
 
-    const std::string headings[3] = {
+    const std::string headings[5] = {
         "Explorer mode",
+        "Word Wrap",
         "Vertical separator",
-        "NAV block cursor"
+        "NAV block cursor",
+        "Force quit"
     };
 
-    const std::string values[3] = {
+    const std::string values[5] = {
         settings.tree ? "TREE" : "SIMPLE",
+        settings.wordWrap ? "ON" : "OFF",
         settings.separator ? "ON" : "OFF",
-        settings.blockCursor ? "ON" : "OFF"
+        settings.blockCursor ? "ON" : "OFF",
+        settings.fqConfirm ? "CONFIRM" : "INSTANT"
     };
 
-    const std::string descriptions[3] = {
+    const std::string descriptions[5] = {
         "Choose between normal navigation and expandable folders.",
+        "Wrap long lines to fit inside the editor.",
         "Display a vertical line between Explorer and Editor.",
-        "Use a block cursor in NAV mode instead of a thin bar."
+        "Use a block cursor in NAV mode instead of a thin bar.",
+        "Choose whether .fq requires confirmation."
     };
 
     screen.text(x + 3, y + 9, headings[selected], title);
@@ -200,9 +206,12 @@ int Application::run() {
     const std::string updateMsg = "Kiwi update available!  [I] Install  [L] Later";
     const std::string mandatoryUpdateMsg = "Installing Kiwi update...";
     bool settingsOpen = false;
+    bool fqConfirmOpen = false;
     int settingIndex = 0;
     float uTab = 0.0f;
     int cursorShape = -1;
+    int terminalW = terminal.w();
+    int terminalH = terminal.h();
 
     AppState state = AppState::Home;
     Focus focus = Focus::Editor;
@@ -216,6 +225,13 @@ int Application::run() {
     int scrollX = 0;
     int scrollY = 0;
     int explorerScroll = 0;
+
+    bool mouseSelecting = false;
+    bool manScroll = false;
+
+    DWORD lastDoubleClick = 0;
+    int lastDoubleX = -1;
+    int lastDoubleY = -1;
 
     bool hTreeOpen = false;
     bool explVis = true;
@@ -415,11 +431,20 @@ int Application::run() {
         const int textWidth = std::max(1, panes[1].area.w - gutter);
         const int textHeight = std::max(1, panes[1].area.h);
 
-        if (editor.cY() < scrollY) scrollY = editor.cY();
-        if (editor.cY() >= scrollY + textHeight) scrollY = editor.cY() - textHeight + 1;
+        const int cursorRow = settings.wordWrap ? editorView.visRow(buffer, editor.cY(), editor.cX(), textWidth) : editor.cY();
+        const int scrollPad = 2;
 
-        if (editor.cX() < scrollX) scrollX = editor.cX();
-        if (editor.cX() >= scrollX + textWidth) scrollX = editor.cX() - textWidth + 1;
+        if (!manScroll) {
+            if (cursorRow < scrollY + scrollPad) scrollY = std::max(0, cursorRow - scrollPad);
+            if (cursorRow >= scrollY + textHeight - scrollPad) scrollY = std::max(0, cursorRow - textHeight + scrollPad + 1);
+        }
+        
+        if (settings.wordWrap) {
+            scrollX = 0;
+        } else if (!manScroll) {
+            if (editor.cX() < scrollX) scrollX = editor.cX();
+            if (editor.cX() >= scrollX + textWidth) scrollX = editor.cX() - textWidth + 1;
+        }
 
         scrollX = std::max(0, scrollX);
         scrollY = std::max(0, scrollY);
@@ -435,7 +460,7 @@ int Application::run() {
 
         if (explVis) explorerView.render(explorer, explorerPainter, explorerScroll, focus == Focus::Explorer);
         if (search.active()) search.refresh(buffer, editor.cX(), editor.cY());
-        if (!buffer.path().empty()) editorView.renderTui(buffer, editor, search, editorPainter, scrollX, scrollY);
+        if (!buffer.path().empty()) editorView.renderTui(buffer, editor, search, editorPainter, scrollX, scrollY, settings.wordWrap);
 
         if (explVis && !buffer.path().empty() && settings.separator && panes[0].area.w > 0) {
             Style sep;
@@ -578,12 +603,21 @@ int Application::run() {
         }
 
         if (!cmdBar.active() && !searchOpen && focus == Focus::Editor && !buffer.path().empty()) {
-            const int localX = gutter + editor.cX() - scrollX;
-            const int localY = editor.cY() - scrollY;
-
+            int localX = 0;
+            int localY = 0;
+                
+            if (settings.wordWrap) {
+                const int visualRow = editorView.visRow(buffer, editor.cY(), editor.cX(), textWidth);
+                localX = gutter + editor.cX() % textWidth;
+                localY = visualRow - scrollY;
+            } else {
+                localX = gutter + editor.cX() - scrollX;
+                localY = editor.cY() - scrollY;
+            }
+        
             cursorX = panes[1].area.x + localX;
             cursorY = panes[1].area.y + localY;
-
+        
             showCursor = localX >= gutter && localX < panes[1].area.w && localY >= 0 && localY < panes[1].area.h;
         }
 
@@ -614,6 +648,172 @@ int Application::run() {
     while (true) {
         const KeyEvent event = console.readKey();
         const char key = event.character;
+
+        const int newW = terminal.w();
+        const int newH = terminal.h();
+
+        if (newW != terminalW || newH != terminalH) {
+            terminalW = newW;
+            terminalH = newH;
+
+            terminal.clear();
+            tui.invalidate();
+
+            if (state == AppState::Home && !hTreeOpen && !settingsOpen) renderHome();
+            else drawFrame();
+
+            continue;
+        }
+
+        if (event.mouse && event.mouseWheel != 0 && !settingsOpen && !cmdBar.active() && !searchOpen && !buffer.path().empty()) {
+            
+            focus = Focus::Editor;
+            state = AppState::Editor;
+            if (event.alt && !event.ctrl && !settings.wordWrap) {
+                const int amount = event.mouseWheel > 0 ? -6 : 6;
+                manScroll = true;
+                scrollX = std::max(0, scrollX + amount);
+                drawFrame();
+            } else if (!event.shift && !event.ctrl && !event.alt) {
+                const int amount = event.mouseWheel > 0 ? -3 : 3;
+                manScroll = true;
+                scrollY = std::max(0, scrollY + amount);
+                drawFrame();
+            }
+        
+            continue;
+        }
+
+        if (event.mouse && (event.mouseLeft || event.mouseMove || event.mouseRelease) && state == AppState::Editor && !settingsOpen && !cmdBar.active() && !searchOpen && !buffer.path().empty()) {
+            if (event.mouseRelease) {
+                mouseSelecting = false;
+                continue;
+            }
+            
+            const Rect area{0, 0, screen.w(), std::max(0, screen.h() - 1)};
+        
+            LayoutItem explorerItem;
+            explorerItem.size = explVis ? (buffer.path().empty() ? area.w : std::min(32, area.w)) : 0;
+        
+            LayoutItem editorItem;
+            editorItem.flex = true;
+        
+            const auto panes = Layout::split(area, LayoutDirection::Horizontal, {explorerItem, editorItem});
+            const int gutter = editorView.gutterWidth(buffer);
+            const int textW = std::max(1, panes[1].area.w - gutter);
+        
+            int localX = event.mouseX - panes[1].area.x - gutter;
+            int localY = event.mouseY - panes[1].area.y;
+
+            if (event.mouseMove && mouseSelecting && !settings.wordWrap) {
+                if (localX <= 0) {
+                    const int amount = localX < 0 ? std::min(6, 1 + (-localX / 2)) : 1;
+                    scrollX = std::max(0, scrollX - amount);
+                    localX = 0;
+                } else if (localX >= textW - 1) {
+                    const int y = std::clamp(localY + scrollY, 0, static_cast<int>(buffer.lines().size()) - 1);
+                    const int lineLength = static_cast<int>(buffer.lines()[y].length());
+                    const int maxScrollX = std::max(0, lineLength - textW + 1);
+                    const int amount = localX >= textW ? std::min(6, 1 + ((localX - textW) / 2)) : 1;
+                    scrollX = std::min(maxScrollX, scrollX + amount);
+                    localX = textW - 1;
+                }
+            }
+
+            if (event.mouseMove && mouseSelecting) {
+                if (localY < 0) {
+                    const int amount = std::min(6, 1 + (-localY / 2));
+                    scrollY = std::max(0, scrollY - amount);
+                    localY = 0;
+                } else if (localY >= panes[1].area.h) {
+                    const int distance = localY - panes[1].area.h;
+                    const int amount = std::min(6, 1 + (distance / 2));
+                    scrollY += amount;
+                    localY = panes[1].area.h - 1;
+                }
+            }
+
+            if (localX >= 0 && localX < textW && localY >= 0 && localY < panes[1].area.h) {
+                int x = 0;
+                int y = 0;
+            
+                bool mapped = false;
+
+                if (settings.wordWrap) {
+                    mapped = editorView.posFromVis(buffer, localY + scrollY, localX, textW, x, y);
+                } else {
+                    y = localY + scrollY;
+                
+                    if (y >= 0 && y < static_cast<int>(buffer.lines().size())) {
+                        x = std::min(localX + scrollX, static_cast<int>(buffer.lines()[y].length()));
+                        mapped = true;
+                    }
+                }
+
+                if (mapped) {
+                    if (event.mouseLeft) {
+                        manScroll = false;
+                        if (editor.selection().active) editor.toggleSelec();
+                        editor.movTo(x, y, buffer);
+
+                        const DWORD now = GetTickCount();
+                        const bool tripleClick = event.mouseClicks == 1 && lastDoubleClick != 0 && now - lastDoubleClick <= GetDoubleClickTime() && std::abs(event.mouseX - lastDoubleX) <= 4 && std::abs(event.mouseY - lastDoubleY) <= 2;
+
+                        if (tripleClick) {
+                            const int end = static_cast<int>(buffer.lines()[y].length());
+                        
+                            editor.movTo(0, y, buffer);
+                            editor.toggleSelec();
+                            editor.movTo(end, y, buffer);
+                            editor.updSelec();
+                        
+                            lastDoubleClick = 0;
+                            mouseSelecting = false;
+                        } else if (event.mouseClicks == 2) {
+                            lastDoubleClick = now;
+                            lastDoubleX = event.mouseX;
+                            lastDoubleY = event.mouseY;
+                            const std::string& line = buffer.lines()[y];
+                        
+                            if (!line.empty()) {
+                                int start = std::min(x, static_cast<int>(line.length()) - 1);
+                                int end = start;
+                            
+                                const auto isWord = [](char ch) {
+                                    return std::isalnum(static_cast<unsigned char>(ch)) || ch == '_';
+                                };
+                            
+                                if (isWord(line[start])) {
+                                    while (start > 0 && isWord(line[start - 1])) start--;
+                                    while (end < static_cast<int>(line.length()) && isWord(line[end])) end++;
+                                
+                                    editor.movTo(start, y, buffer);
+                                    editor.toggleSelec();
+                                    editor.movTo(end, y, buffer);
+                                    editor.updSelec();
+                                }
+                            }
+                        
+                            mouseSelecting = false;
+                        } else {
+                            mouseSelecting = true;
+                        }
+                    } else if (event.mouseMove && mouseSelecting) {
+                        manScroll = true;
+                        if (!editor.selection().active) editor.toggleSelec();
+                        editor.movTo(x, y, buffer);
+                        editor.updSelec();
+                    }
+                
+                    focus = Focus::Editor;
+                    search.clear();
+                    message.clear();
+                    drawFrame();
+                }
+            }
+        
+            continue;
+        }
 
         if (tutorial.active()) {
             if (!event.keyDown) continue;
@@ -698,8 +898,8 @@ int Application::run() {
 
             int nextIndex = settingIndex;
 
-            if (key == 'a' || key == 'w') nextIndex = (settingIndex + 2) % 3;
-            if (key == 'd' || key == 's') nextIndex = (settingIndex + 1) % 3;
+            if (key == 'a' || key == 'w') nextIndex = (settingIndex + 4) % 5;
+            if (key == 'd' || key == 's') nextIndex = (settingIndex + 1) % 5;
 
             if (nextIndex != settingIndex) {
                 const float start = uTab;
@@ -725,15 +925,35 @@ int Application::run() {
                     explorer.setTree(settings.tree);
                     explorerScroll = 0;
                 } else if (settingIndex == 1) {
+                    settings.wordWrap = !settings.wordWrap;
+                } else if (settingIndex == 2) {
                     settings.separator = !settings.separator;
-                } else {
+                } else if (settingIndex == 3) {
                     settings.blockCursor = !settings.blockCursor;
+                } else {
+                    settings.fqConfirm = !settings.fqConfirm;
                 }
 
                 if (!settings.save()) message = "Could not save settings";
             }
 
             drawFrame();
+            continue;
+        }
+
+        if (fqConfirmOpen) {
+            if (!event.keyDown) continue;
+            if (key == 'y' || key == 'Y') break;
+            if (key == 'n' || key == 'N' || key == 27) {
+                fqConfirmOpen = false;
+                message.clear();
+            
+                if (state == AppState::Editor) drawFrame();
+                else renderHome();
+            
+                continue;
+            }
+        
             continue;
         }
 
@@ -945,9 +1165,10 @@ int Application::run() {
                 drawFrame();
                 continue;
             }*/
-
+            
+            if (search.active() && key != 'n' && key != 'N') search.clear();
+            manScroll = false;
             editor.handleKey(key, buffer, clipboard);
-
             message.clear();
             drawFrame();
             continue;
@@ -1227,7 +1448,19 @@ int Application::run() {
                 break;
             }
 
-            if (command.type == CommandType::ForceQuit) break;
+            if (command.type == CommandType::ForceQuit) {
+                cmdBar.cancel();
+
+                if (!settings.fqConfirm) break;
+
+                fqConfirmOpen = true;
+                message = "Force quit? [Y] Yes  [N] No";
+
+                if (state == AppState::Editor) drawFrame();
+                else home.renderMsg(message);
+
+                continue;
+            }
 
             if (command.type == CommandType::Quit) {
                 if (state == AppState::Editor && buffer.modified()) {
@@ -1418,5 +1651,7 @@ int Application::run() {
 
     std::cout << "\x1b[0 q" << std::flush;
     terminal.showCursor();
+    terminal.clear();
+    std::cout << "\x1b[H" << std::flush;
     return 0;
 }

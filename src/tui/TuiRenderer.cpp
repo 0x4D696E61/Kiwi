@@ -1,4 +1,3 @@
-
 #include "TuiRenderer.hpp"
 #include "Screen.hpp"
 #include "../terminal/Terminal.hpp"

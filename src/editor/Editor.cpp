@@ -64,16 +64,29 @@ void Editor::handleKey(char key, Buffer& buffer, const Clipboard& clipboard) {
             if (bracePair) {
                 buffer.insertLine(cX_, cY_);
                 cY_++;
-                for (int i = 0; i < indent; i++) buffer.insertChar(i, cY_, ' ');
-                buffer.insertLine(indent, cY_);
+            
+                buffer.deleteRange(0, static_cast<int>(buffer.lines()[cY_].length()), cY_);
+            
                 for (int i = 0; i < indent + 4; i++) buffer.insertChar(i, cY_, ' ');
+            
+                buffer.insertLine(indent + 4, cY_);
+            
+                cY_++;
+                for (int i = 0; i < indent; i++) buffer.insertChar(i, cY_, ' ');
+                buffer.insertChar(indent, cY_, '}');
+            
+                cY_--;
                 cX_ = indent + 4;
                 return;
             }
         
-            if (cX_ <= indent && !line.empty()) {
+            if (line.find_first_not_of(' ') == std::string::npos) {
                 buffer.insertLine(cX_, cY_);
                 cY_++;
+                        
+                for (int i = 0; i < indent; i++) buffer.insertChar(i, cY_, ' ');
+                        
+                cX_ = indent;
                 return;
             }
         
@@ -114,6 +127,20 @@ void Editor::handleKey(char key, Buffer& buffer, const Clipboard& clipboard) {
         else if (key == '{') close = '}';
         else if (key == '"') close = '"';
         else if (key == '\'') close = '\'';
+
+        if ((key == '"' || key == '\'') && close != 0) {
+            int count = 0;
+                
+            for (int i = 0; i < cX_; i++) {
+                if (buffer.lines()[cY_][i] == key) count++;
+            }
+        
+            if (count % 2 != 0) {
+                buffer.insertChar(cX_, cY_, key);
+                cX_++;
+                return;
+            }
+        }
 
         if (close != 0) {
             //history_.push({EditActionType::InsertChar, cX_, cY_, std::string(1, key)});

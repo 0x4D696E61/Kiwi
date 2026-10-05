@@ -9,6 +9,8 @@ struct Settings {
     bool tree = false;
     bool separator = false;
     bool blockCursor = false;
+    bool wordWrap = true;
+    bool fqConfirm = true;
 
     std::filesystem::path path() const {
         const char* appdata = std::getenv("APPDATA");
@@ -26,6 +28,10 @@ struct Settings {
             else if (line == "separator=0") separator = false;
             else if (line == "blockCursor=1") blockCursor = true;
             else if (line == "blockCursor=0") blockCursor = false;
+            else if (line == "wordWrap=1") wordWrap = true;
+            else if (line == "wordWrap=0") wordWrap = false;
+            else if (line == "fqConfirm=1") fqConfirm = true;
+            else if (line == "fqConfirm=0") fqConfirm = false;
         }
     }
 
@@ -38,6 +44,8 @@ struct Settings {
         file << "tree=" << tree << '\n';
         file << "separator=" << separator << '\n';
         file << "blockCursor=" << blockCursor << '\n';
+        file << "wordWrap=" << wordWrap << '\n';
+        file << "fqConfirm=" << fqConfirm << '\n';
         return static_cast<bool>(file);
     }
 };

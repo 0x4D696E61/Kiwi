@@ -330,15 +330,71 @@ int EditorRenderer::gutterWidth(const Buffer& buffer) const {
     return digits + 3;
 }
 
+int EditorRenderer::visRow(const Buffer& buffer, int lineY, int colX, int textW) const {
+    if (textW <= 0) return 0;
+    
+    const auto& lines = buffer.lines();
+    int row = 0;
+    
+    for (int y = 0; y < lineY && y < static_cast<int>(lines.size()); y++) {
+        const int len = static_cast<int>(lines[y].length());
+        row += std::max(1, (len + textW - 1) / textW);    
+    }
+    
+    if (lineY >= 0 && lineY < static_cast<int>(lines.size())) {
+        const int len = static_cast<int>(lines[lineY].length());
+        if (colX == len && len > 0 && len % textW == 0) colX--;
+    }
 
-void EditorRenderer::renderTui(const Buffer& buffer, const Editor& editor, const Search& search, Painter& painter, int scrollX, int scrollY) {
+    row += std::max(0, colX) / textW;
+    return row;
+}
+
+int EditorRenderer::visRows(const Buffer& buffer, int textW) const {
+    if (textW <= 0) return 0;
+    
+    int rows = 0;
+    
+    for (const std::string& line : buffer.lines()) {
+        const int len = static_cast<int>(line.length());
+        rows += std::max(1, (len + textW - 1) / textW);    
+    }
+    
+    return rows;
+}
+
+bool EditorRenderer::posFromVis(const Buffer& buffer, int visRow, int visCol, int textW, int& outX, int& outY) const {
+    if (textW <= 0 || visRow < 0 || visCol < 0) return false;
+    
+    const auto& lines = buffer.lines();
+    int row = 0;
+    
+    for (int y = 0; y < static_cast<int>(lines.size()); y++) {
+        const int len = static_cast<int>(lines[y].length());
+        const int rows = std::max(1, (len + textW - 1) / textW);
+        
+        if (visRow >= row && visRow < row + rows) {
+            const int wrapRow = visRow - row;
+            outY = y;
+            outX = std::min(wrapRow * textW + visCol, len);
+            return true;
+        }
+        
+        row += rows;
+    }
+    
+    return false;
+}
+
+
+void EditorRenderer::renderTui(const Buffer& buffer, const Editor& editor, const Search& search, Painter& painter, int scrollX, int scrollY, bool wordWrap) {
     painter.fill();
 
     const auto& lines = buffer.lines();
     const Selection& sel = editor.selection();
 
     const int gutter = gutterWidth(buffer);
-    const int textW = std::max(0, painter.w() - gutter);
+    const int textW = std::max(1, painter.w() - gutter);
 
     int startX = sel.startX;
     int startY = sel.startY;
@@ -358,71 +414,75 @@ void EditorRenderer::renderTui(const Buffer& buffer, const Editor& editor, const
     currNum.bold = true;
 
     SyntaxState syntax;
-    
+
     std::string ext = buffer.path().extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
-    
-    for (int i = 0; i < std::min(scrollY, static_cast<int>(lines.size())); i++) highlightLine(lines[i], ext, syntax);
 
-    for (int y = 0; y < painter.h(); y++) {
-        const int lineY = scrollY + y;
+    int visualY = 0;
 
-        if (lineY < 0 || lineY >= static_cast<int>(lines.size())) break;
-
+    for (int lineY = 0; lineY < static_cast<int>(lines.size()); lineY++) {
         const std::string& line = lines[lineY];
         const auto colors = highlightLine(line, ext, syntax);
-        const std::string number = std::to_string(lineY + 1);
-        const std::string padding(std::max(0, gutter - 3 - static_cast<int>(number.length())), ' ');
 
-        painter.text(0, y, padding + number + "   ", lineY == editor.cY() ? currNum : numbers);
+        const int rows = wordWrap ? std::max(1, (static_cast<int>(line.length()) + textW - 1) / textW) : 1;
 
-        const bool lineSelected =
-            sel.active &&
-            editor.isLineSelec() &&
-            lineY >= std::min(sel.startY, sel.endY) &&
-            lineY <= std::max(sel.startY, sel.endY);
+        for (int wrapRow = 0; wrapRow < rows; wrapRow++) {
+            const int screenY = visualY - scrollY;
 
-        for (int x = 0; x < textW; x++) {
-            const int lineX = scrollX + x;
+            if (screenY >= painter.h()) return;
 
-            if (lineX < 0) continue;
-            if (lineX >= static_cast<int>(line.length()) && !lineSelected) break;
+            if (screenY >= 0) {
+                if (wrapRow == 0) {
+                    const std::string number = std::to_string(lineY + 1);
+                    const std::string padding(std::max(0, gutter - 3 - static_cast<int>(number.length())), ' ');
+                    painter.text(0, screenY, padding + number + "   ", lineY == editor.cY() ? currNum : numbers);
+                }
 
-            bool selec = lineSelected;
+                const bool lineSelected = sel.active && editor.isLineSelec() && lineY >= std::min(sel.startY, sel.endY) && lineY <= std::max(sel.startY, sel.endY);
 
-            if (sel.active && !editor.isLineSelec()) {
-                const bool as = lineY > startY || (lineY == startY && lineX >= startX); //afterstart
-                const bool be = lineY < endY || (lineY == endY && lineX < endX); //before end
+                for (int x = 0; x < textW; x++) {
+                    const int lineX = wordWrap ? wrapRow * textW + x : scrollX + x;
 
-                selec = as && be;
-            }
+                    if (lineX < 0) continue;
+                    if (lineX >= static_cast<int>(line.length()) && !lineSelected) break;
 
-            bool searchMat = false;
-            bool currSearchMat = false;
+                    bool selec = lineSelected;
 
-            const SearchMat* currMat = search.curr();
+                    if (sel.active && !editor.isLineSelec()) {
+                        const bool as = lineY > startY || (lineY == startY && lineX >= startX);
+                        const bool be = lineY < endY || (lineY == endY && lineX < endX);
+                        selec = as && be;
+                    }
 
-            for (const SearchMat& mat : search.matches()) {
-                if (mat.y != lineY) continue;
+                    bool searchMat = false;
+                    bool currSearchMat = false;
 
-                if (lineX >= mat.x && lineX < mat.x + mat.length) {
-                    searchMat = true;
+                    const SearchMat* currMat = search.curr();
 
-                    if (currMat == &mat) currSearchMat = true;
+                    for (const SearchMat& mat : search.matches()) {
+                        if (mat.y != lineY) continue;
 
-                    break;
+                        if (lineX >= mat.x && lineX < mat.x + mat.length) {
+                            searchMat = true;
+                            if (currMat == &mat) currSearchMat = true;
+                            break;
+                        }
+                    }
+
+                    const char character = lineX < static_cast<int>(line.length()) ? line[lineX] : ' ';
+
+                    Style style;
+                    style.fgRgb = lineX < static_cast<int>(colors.size()) ? colors[lineX] : kiwiTheme.file;
+
+                    if (searchMat) style.bgRgb = kiwiTheme.search;
+                    if (currSearchMat) style.bgRgb = kiwiTheme.searchCurr;
+                    if (selec) style.bgRgb = kiwiTheme.selec;
+
+                    painter.set(gutter + x, screenY, character, style);
                 }
             }
 
-            const char character = lineX < static_cast<int>(line.length()) ? line[lineX] : ' ';
-
-            Style style;
-            style.fgRgb = lineX < static_cast<int>(colors.size()) ? colors[lineX] : kiwiTheme.file;
-            if (searchMat) style.bgRgb = kiwiTheme.search;
-            if (currSearchMat) style.bgRgb = kiwiTheme.searchCurr;
-            if (selec) style.bgRgb = kiwiTheme.selec;
-                    
-            painter.set(gutter + x, y, character, style);
+            visualY++;
         }
     }
 }

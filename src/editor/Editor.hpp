@@ -31,6 +31,9 @@ public:
     int cX() const;
     int cY() const;
 
+    void toggleSelec();
+    void updSelec();
+
     void movTo(int x, int y, const Buffer& buffer);
 
 private:
@@ -46,9 +49,6 @@ private:
     void movnWORD(const Buffer& buffer);
 
     void movMatch(const Buffer& buffer);
-
-    void toggleSelec();
-    void updSelec();
 
     void cpLine(const Buffer& buffer, const Clipboard& clipboard);
     void cpSel(const Buffer& buffer, const Clipboard& clipboard);
