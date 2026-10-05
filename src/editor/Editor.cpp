@@ -210,6 +210,33 @@ void Editor::handleKey(char key, Buffer& buffer, const Clipboard& clipboard) {
     }
 
     // key sequences eg qq qQ rr rR xx xa xv cc cv ca gg GG
+
+    if (!gotoKeys_.empty()) {
+        if (gotoKeys_ == "g" && key == 't') {
+            gotoKeys_ = "gt";
+            pendingKeys_.clear();
+            return;
+        }
+
+        if (gotoKeys_.rfind("gt", 0) == 0 && key >= '0' && key <= '9') {
+            gotoKeys_ += key;
+            gotoTime_ = std::chrono::steady_clock::now();
+            return;
+        }
+
+        if (key == 27) {
+            gotoKeys_.clear();
+            pendingKeys_.clear();
+            return;
+        }
+
+        gotoKeys_.clear();
+    }
+
+    if (key == 'g' && pendingKeys_.empty()) {
+        gotoKeys_ = "g";
+    }
+    
     if (key == 'q' || key == 'Q' || key == 'r' || key == 'R' || key == 'x' || key == 'c' || key == 'g' || key == 'G' || (pendingKeys_ == "x" && (key == 'a' || key == 'v'))) {
         if (pendingKeys_.empty()) {
             pendingKeys_ = key;
@@ -220,6 +247,7 @@ void Editor::handleKey(char key, Buffer& buffer, const Clipboard& clipboard) {
         if (pendingKeys_ == "qq") {
             movpWord(buffer);
             pendingKeys_.clear();
+            gotoKeys_.clear();
         } else if (pendingKeys_ == "qQ") {
             movpWORD(buffer);
             pendingKeys_.clear();
@@ -357,8 +385,34 @@ void Editor::handleKey(char key, Buffer& buffer, const Clipboard& clipboard) {
     updSelec();
 }
 
+void Editor::tickGoto(Buffer& buffer) {
+    if (gotoKeys_.size() <= 2) return;
+
+    const auto elapsed = std::chrono::steady_clock::now() - gotoTime_;
+
+    if (elapsed < std::chrono::milliseconds(300)) return;
+
+    const int line = std::stoi(gotoKeys_.substr(2));
+    gotoLine(line, buffer);
+    gotoKeys_.clear();
+    pendingKeys_.clear();
+}
+
 void Editor::enterMoveMode() {
     mode_ = EditorMode::Move;
+}
+
+bool Editor::gotoLine(int line, const Buffer& buffer) {
+    const auto& lines = buffer.lines();
+
+    if (line < 1 || line > static_cast<int>(lines.size())) return false;
+
+    cY_ = line - 1;
+    cX_ = 0;
+    selection_.active = false;
+    lineSelec_ = false;
+    updSelec();
+    return true;
 }
 
 void Editor::reset() {
@@ -369,6 +423,7 @@ void Editor::reset() {
 
     selection_ = {};
     pendingKeys_.clear();
+    gotoKeys_.clear();
     //history_.clear();
 }
 

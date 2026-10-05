@@ -6,6 +6,7 @@ enum class CommandType {
     None, New,
     Open, Quit, ForceQuit,
     Save, SaveAs, SaveQuit,
+    Goto,
     Unknown
 };
 

@@ -5,6 +5,7 @@
 #include "Selection.hpp"
 
 #include <string>
+#include <chrono>
 
 class Buffer;
 class Clipboard;
@@ -35,6 +36,9 @@ public:
     void updSelec();
 
     void movTo(int x, int y, const Buffer& buffer);
+    bool gotoLine(int line, const Buffer& buffer);
+    
+    void tickGoto(Buffer& buffer);
 
 private:
     EditorMode mode_;
@@ -60,5 +64,7 @@ private:
     int cY_;
 
     std::string pendingKeys_;
+    std::string gotoKeys_;
+    std::chrono::steady_clock::time_point gotoTime_{};
     Selection selection_;
 };

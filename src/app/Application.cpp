@@ -647,6 +647,17 @@ int Application::run() {
 
     while (true) {
         const KeyEvent event = console.readKey();
+            
+        const int oldX = editor.cX();
+        const int oldY = editor.cY();
+            
+        editor.tickGoto(buffer);
+            
+        if (editor.cX() != oldX || editor.cY() != oldY) {
+            manScroll = false;
+            drawFrame();
+        }
+        
         const char key = event.character;
 
         const int newW = terminal.w();
@@ -1583,6 +1594,35 @@ int Application::run() {
 
                 terminal.clear();
                 tui.invalidate();
+                drawFrame();
+                continue;
+            }
+
+            // Goto
+            if (command.type == CommandType::Goto) {
+                cmdBar.cancel();
+            
+                if (state != AppState::Editor) {
+                    home.renderMsg("No file is open");
+                    continue;
+                }
+            
+                if (command.argument.empty() || !std::all_of(command.argument.begin(), command.argument.end(), [](unsigned char c) { return std::isdigit(c); })) {
+                    message = "Error: .goto requires a valid line number";
+                    drawFrame();
+                    continue;
+                }
+            
+                const int line = std::stoi(command.argument);
+            
+                if (!editor.gotoLine(line, buffer)) {
+                    message = "Error: line does not exist";
+                    drawFrame();
+                    continue;
+                }
+            
+                manScroll = false;
+                message.clear();
                 drawFrame();
                 continue;
             }

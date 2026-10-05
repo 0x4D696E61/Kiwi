@@ -24,6 +24,8 @@ Command CmdParser::parse(const std::string& text) const {
         command.type = CommandType::ForceQuit;
     } else if (name == ".saveas") {
         command.type = CommandType::SaveAs;
+    } else if (name == ".goto") {
+        command.type = CommandType::Goto;
     } else {
         command.type = CommandType::Unknown;
     }
