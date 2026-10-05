@@ -81,32 +81,22 @@ Kiwi uses **NAV** for navigation and commands and **EDIT** for writing.
 
 ### NAV
 
-| Navigation | Action | Navigation | Action |
+| Keys | Action | Keys | Action |
 | --- | --- | --- | --- |
-| `W` | Up | `S` | Down |
-| `A` | Left | `D` | Right |
-| `qq` | Previous word | `rr` | Next word |
-| `qQ` | Previous WORD | `rR` | Next WORD |
-| `Shift + A` | Start of line | `Shift + D` | End of line |
-| `gg` | Start of file | `GG` | End of file |
-| `%` | Matching bracket | `xx` | Change word + EDIT |
+| `W` / `S` | Up / Down | `A` / `D` | Left / Right |
+| `qq` / `rr` | Previous / next word | `qQ` / `rR` | Previous / next WORD |
+| `Shift + A` / `Shift + D` | Start / end of line | `gg` / `GG` | Start / end of file |
+| `gt<number>` | Go to line | `%` | Matching bracket |
+| `v` / `Shift + V` | Toggle selection / select line | `cc` / `cv` | Copy line / selection |
+| `ca` | Paste | `xx` | Change word + EDIT |
+| `xa` / `xv` | Change line / selection + EDIT | `/` | Search file |
+| `n` / `N` | Next / previous match | `.` | Command bar |
 
-| Editing / Search | Action | Editing / Search | Action |
-| --- | --- | --- | --- |
-| `v` | Toggle selection | `Shift + V` | Select line |
-| `cc` | Copy line | `cv` | Copy selection |
-| `ca` | Paste | `xa` | Change line + EDIT |
-| `xv` | Change selection + EDIT | `/` | Search file |
-| `n` | Next match | `N` | Previous match |
-| `Space` | Enter EDIT | `.` | Command bar |
-
-Moving while a selection is active extends the selection.
-
-**WORD** navigation treats any sequence of non-whitespace characters as one WORD.
+Moving while a selection is active extends the selection. **WORD** navigation treats any sequence of non-whitespace characters as one WORD.
 
 ### EDIT
 
-| Key | Action | Key | Action |
+| Keys | Action | Keys | Action |
 | --- | --- | --- | --- |
 | Normal keys | Insert text | `Enter` | New line |
 | `Backspace` | Delete / merge lines | `Tab` | Insert 4 spaces |
@@ -114,24 +104,15 @@ Moving while a selection is active extends the selection.
 
 ### Explorer, Home & Settings
 
-| Context | Key | Action |
-| --- | --- | --- |
-| Explorer | `W` / `S` | Move up / down |
-| Explorer | `Enter` | Open file/directory or toggle Tree directory |
-| Explorer | `Backspace` | Parent directory |
-| Explorer | `.` | Command bar |
-| Explorer | `Left Ctrl + Space` | Switch Explorer/Editor focus |
-| Home | `N` | New file |
-| Home | `O` | Open file |
-| Home | `S` | Settings |
-| Home | `1` - `9` | Open recent file |
-| Home | `.` | Command bar |
-| Settings | `A` / `W` | Previous setting |
-| Settings | `D` / `S` | Next setting |
-| Settings | `Enter` | Toggle setting |
-| Settings | `Esc` | Close Settings |
-
-Settings currently include Simple/Tree explorer, the Explorer/Editor separator, and the NAV block cursor.
+| Context | Keys | Action | Context | Keys | Action |
+| --- | --- | --- | --- | --- | --- |
+| Explorer | `W` / `S` | Move up / down | Explorer | `Enter` | Open / toggle directory |
+| Explorer | `Backspace` | Parent directory | Explorer | `.` | Command bar |
+| Explorer | `Left Ctrl + Space` | Switch focus | Home | `N` | New file |
+| Home | `O` | Open file | Home | `S` | Settings |
+| Home | `1`-`9` | Open recent file | Home | `.` | Command bar |
+| Settings | `A` / `W` | Previous setting | Settings | `D` / `S` | Next setting |
+| Settings | `Enter` | Toggle setting | Settings | `Esc` | Close Settings |
 
 ## Commands
 
@@ -145,6 +126,7 @@ Press `.` to open the command bar.
 | `.open <path>` | Open a file |
 | `.save` / `.s` | Save |
 | `.saveas <path>` | Save to another path |
+| `.goto <line>` | Go to a line |
 | `.del <path>` / `.delete <path>` | Delete a file |
 
 ### Workspace
