@@ -1,4 +1,4 @@
-#define AppVersion "0.2.06"
+#define AppVersion "0.2.07"
 
 [Setup]
 AppId=0x4D696E61.Kiwi

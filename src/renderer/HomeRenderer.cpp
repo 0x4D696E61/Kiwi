@@ -160,7 +160,7 @@ void HomeRenderer::render(int offset) {
     draw(left + 2, y++, ".settings         Open preferences", white);
     draw(left + 2, y++, ".quit             Exit Kiwi", white);
 
-    if (height >= 27) center(height - 3, "One Terminal, one Workspace.", muted);
+    //if (height >= 27) center(height - 3, "One Terminal, one Workspace.", muted);
 
     renderCmdBar("");
 }
