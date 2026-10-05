@@ -4,17 +4,17 @@
     <title>Kiwi Updates</title>
     <description>Kiwi automatic updates</description>
     <item>
-      <title>Kiwi 0.2.05</title>
-      <description>Kiwi 0.2.05 - Mouse editing, word wrapping, and terminal improvements.</description>
+      <title>Kiwi 0.2.06</title>
+      <description>Kiwi 0.2.06 - Updater shell cleanup fix.</description>
 
       <sparkle:criticalUpdate />
 
       <enclosure
-        url="https://github.com/0x4D696E61/Kiwi/releases/download/v0.2.05/Kiwi-Setup-0.2.05.exe"
-        sparkle:version="0.2.05"
-        sparkle:shortVersionString="0.2.05"
-        sparkle:edSignature="AFRzfUmt63ndQITOlC/amKYmvJ2Bnyitr+HxplAi3DOuJOoDJyyMxUrEGx7YcHQ9WScR+RUH6ZmtGy18hvTYBA=="
-        length="4520133"
+        url="https://github.com/0x4D696E61/Kiwi/releases/download/v0.2.06/Kiwi-Setup-0.2.06.exe"
+        sparkle:version="0.2.06"
+        sparkle:shortVersionString="0.2.06"
+        sparkle:edSignature="FWfSoCJ60IsiS5Y2arvYq5c7P3OvXOkJhQwIQvg/D62WmFW7ZUrEkNcq8SI/OX9YyngLms64oz+q7Ap4RGcUDg=="
+        length="4521893"
         type="application/octet-stream"
       />
     </item>
